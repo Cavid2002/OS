@@ -1,14 +1,38 @@
-
-
 ASM = nasm
-ASMFLAGS = -f bin 
-LINKFLAGS = -m
+CC = gcc
+
+CFLAGS = -ffreestanding -m32 -masm=intel -c -nostdlib -fno-pie
+LDFLAGS = -m elf_i386 -T ./kernel/linker.ld --oformat=binary
+
+OBJS = ./bin/entry.o ./bin/kernel.o ./bin/vga.o
+
+os.bin: ./bin/boot.bin ./bin/kernel.bin
+	cat ./bin/boot.bin ./bin/kernel.bin > ./os.bin
+	truncate --size 1M ./os.bin
 
 
-boot: boot.asm
-	$(ASM) $(ASMFLAGS) boot.asm -o boot.bin
+./bin/boot.bin: ./asm/boot.asm
+	$(ASM) -f bin ./asm/boot.asm -o ./bin/boot.bin
 
 
-.PHONY = run
+./bin/kernel.o: ./kernel/kernel.c
+	$(CC) $(CFLAGS) ./kernel/kernel.c -o ./bin/kernel.o
+
+
+./bin/vga.o: ./kernel/vga.c ./include/vga.h
+	$(CC) $(CFLAGS) ./kernel/vga.c -o ./bin/vga.o
+
+
+./bin/kernel.bin: $(OBJS)
+	$(ASM) -f elf32 ./asm/entry.asm -o ./bin/entry.o 
+	ld $(LDFLAGS) $(OBJS) -o ./bin/kernel.bin
+
+
+
+.PHONY: run clean
+
 run:
-	qemu-system-i386 -hda boot.bin
+	qemu-system-i386 -hda ./os.bin
+
+clean:
+	rm ./bin/* ./os.bin
