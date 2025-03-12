@@ -5,5 +5,10 @@ void kernel_main()
 {
     terminal_init();
 
-    terminal_puts("Hello World");
+    terminal_puts("Hello World"); 
+
+    while(1)
+    {
+        
+    }
 }
