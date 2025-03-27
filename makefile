@@ -12,6 +12,7 @@ os.bin: ./bin/boot.bin ./bin/kernel.bin
 
 
 ./bin/boot.bin: ./asm/boot.asm
+	mkdir -p ./bin
 	$(ASM) -f bin ./asm/boot.asm -o ./bin/boot.bin
 
 
@@ -22,11 +23,11 @@ os.bin: ./bin/boot.bin ./bin/kernel.bin
 ./bin/vga.o: ./kernel/vga.c ./include/vga.h
 	$(CC) $(CFLAGS) ./kernel/vga.c -o ./bin/vga.o
 
+./bin/entry.o: ./asm/entry.asm
+	$(ASM) -f elf32 ./asm/entry.asm -o ./bin/entry.o 
 
 ./bin/kernel.bin: $(OBJS)
-	$(ASM) -f elf32 ./asm/entry.asm -o ./bin/entry.o 
 	ld $(LDFLAGS) $(OBJS) -o ./bin/kernel.bin
-
 
 
 .PHONY: run clean
