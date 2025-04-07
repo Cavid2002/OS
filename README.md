@@ -15,6 +15,6 @@ Each component is designed to provide students and developers with hands-on expe
 
 ## The Reader ##
 
-Most well-known books on operating systems focus primarily on theoretical concepts and ideas related to existing environments, without offering practical guidance on how to create an operating system from scratch. While resources like [osdev.org](https://wiki.osdev.org/) provide valuable information, they often assume a certain level of prior knowledge, which can make them challenging for beginners. This document aims to fill that gap by offering a detailed, step-by-step explanation of each component of the operating system as development progresses, making it easier for readers to understand and implement the concepts themselves.
+Most well-known books on operating systems focus primarily on theoretical concepts and ideas related to existing environments, without offering practical guidance on how to create an operating system from scratch. While resources like [osdev.org](https://wiki.osdev.org/) provide valuable information with the doucumetation references to all kinds of hardware, they often assume a certain level of prior knowledge, which can make them challenging for beginners. This document aims to fill that gap by offering a detailed, step-by-step explanation of each component of the operating system as development progresses, making it easier for readers to understand and implement the concepts themselves.
 
 
