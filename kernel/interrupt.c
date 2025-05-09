@@ -1,22 +1,20 @@
 #include "../include/interrupt.h"
 
+static IdtEntry interruptTable[256];
+static IdtDescriptor Idescriptor;
 
-void PIC_send_eoi(uint8_t irq)
+
+void IdtDescriptorInit()
 {
-    if(irq >= 8)
-    {
-        out_byte(PIC2_CMD_PORT, PIC_EOI);
-    }
-    out_byte(PIC1_CMD_PORT, PIC_EOI);
+    Idescriptor.addr = (uint32_t)interruptTable;
+    Idescriptor.size = 255;
 }
 
-void PIC_disable()
+void IdtEntryCreate(void (func)(), uint8_t num, uint8_t type)
 {
-    out_byte(PIC1_CMD_PORT, PIC_DISABLE);
-    out_byte(PIC2_CMD_PORT, PIC_DISABLE);
-}
-
-void PIC_remap(uint8_t offset1, uint8_t offset20)
-{
-    
+    uint32_t addr = (uint32_t)func;
+    interruptTable[num].offset_low = (uint16_t)addr;
+    interruptTable[num].offset_high = (uint16_t)(addr >> 16);
+    interruptTable[num].flags = 0x80 | type;
+    interruptTable[num].selector = 0x0008;
 }

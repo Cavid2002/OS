@@ -8,8 +8,8 @@ out_byte:
     push ebp
     mov ebp, esp
 
-    mov eax, [ebp + 8]
-    mov edx, [ebp + 12]
+    mov eax, [ebp + 12]
+    mov edx, [ebp + 8]
     out dx, al
 
     mov esp, ebp
@@ -21,8 +21,8 @@ out_word:
     push ebp
     mov ebp, esp
 
-    mov eax, [ebp + 8]
-    mov edx, [ebp + 12]
+    mov eax, [ebp + 12]
+    mov edx, [ebp + 8]
     out dx, ax
 
     mov esp, ebp
