@@ -8,7 +8,7 @@ _main:
 
 load_kernel:
     mov ah, 0x02    ; BIOS function to read sectors
-    mov al, 0x05    ; Number of sectors to read 
+    mov al, 0x0F    ; Number of sectors to read 
     mov ch, 0x00    ; Cylinder 0
     mov cl, 0x02    ; Starting Sector 2
     mov dh, 0x00    ; Head number

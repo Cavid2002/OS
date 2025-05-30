@@ -29,4 +29,13 @@
 #define PIC_READ_ISR    0x0b  
 
 
+void PIC_send_eoi(uint8_t irq);
+void PIC_disable();
+uint16_t PIC_read_irr();
+uint16_t PIC_read_isr();
+void PIC_set_mask(uint16_t line);
+void PIC_unmask(uint16_t line);
+void PIC_remap(uint8_t offset1, uint8_t offset2);
+
+
 #endif

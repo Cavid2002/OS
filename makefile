@@ -4,12 +4,16 @@ CC = gcc
 CFLAGS = -ffreestanding -m32 -masm=intel -c -nostdlib -fno-pie
 LDFLAGS = -m elf_i386 -T ./kernel/linker.ld --oformat=binary
 
-OBJS = ./bin/entry.o ./bin/kernel.o ./bin/vga.o
+OBJS = ./bin/entry.o ./bin/kernel.o ./bin/VGA.o \
+		./bin/interrupt.o ./bin/PIC.o ./bin/portio.o \
+		./bin/interrupt_wrapper.o
 
 os.bin: ./bin/boot.bin ./bin/kernel.bin
 	cat ./bin/boot.bin ./bin/kernel.bin > ./os.bin
-	truncate --size 1M ./os.bin
+	truncate --size 5M ./os.bin
 
+./bin/kernel.bin: $(OBJS)
+	ld $(LDFLAGS) $(OBJS) -o ./bin/kernel.bin
 
 ./bin/boot.bin: ./asm/boot.asm
 	mkdir -p ./bin
@@ -20,15 +24,27 @@ os.bin: ./bin/boot.bin ./bin/kernel.bin
 	$(CC) $(CFLAGS) ./kernel/kernel.c -o ./bin/kernel.o
 
 
-./bin/vga.o: ./kernel/vga.c ./include/vga.h
-	$(CC) $(CFLAGS) ./kernel/vga.c -o ./bin/vga.o
+./bin/VGA.o: ./kernel/VGA.c ./include/VGA.h
+	$(CC) $(CFLAGS) ./kernel/VGA.c -o ./bin/VGA.o
 
 ./bin/entry.o: ./asm/entry.asm
 	$(ASM) -f elf32 ./asm/entry.asm -o ./bin/entry.o 
 
-./bin/kernel.bin: $(OBJS)
-	ld $(LDFLAGS) $(OBJS) -o ./bin/kernel.bin
 
+./bin/portio.o: ./asm/portio.asm
+	$(ASM) -f elf32 ./asm/portio.asm -o ./bin/portio.o
+
+
+./bin/interrupt.o: ./include/interrupt.h ./kernel/interrupt.c
+	$(CC) $(CFLAGS) ./kernel/interrupt.c -o ./bin/interrupt.o
+
+
+./bin/PIC.o: ./include/PIC.h ./kernel/PIC.c
+	$(CC) $(CFLAGS) ./kernel/PIC.c -o ./bin/PIC.o
+
+
+./bin/interrupt_wrapper.o: ./asm/interrupt_wrapper.asm
+	$(ASM) -f elf32 ./asm/interrupt_wrapper.asm -o ./bin/interrupt_wrapper.o
 
 .PHONY: run clean
 
