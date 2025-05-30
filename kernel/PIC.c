@@ -23,7 +23,7 @@ uint16_t PIC_read_irr()
     out_byte(PIC1_CMD_PORT, PIC_READ_IRR);
     out_byte(PIC2_CMD_PORT, PIC_READ_IRR);
     res |= (uint16_t)in_byte(PIC1_CMD_PORT);
-    res |= (uint16_t)in_byte(PIC1_CMD_PORT) << 8;
+    res |= (uint16_t)in_byte(PIC2_CMD_PORT) << 8;
     return res;
 }
 
@@ -33,7 +33,7 @@ uint16_t PIC_read_isr()
     out_byte(PIC1_CMD_PORT, PIC_READ_ISR);
     out_byte(PIC2_CMD_PORT, PIC_READ_ISR);
     res |= (uint16_t)in_byte(PIC1_CMD_PORT);
-    res |= (uint16_t)in_byte(PIC1_CMD_PORT) << 8;
+    res |= (uint16_t)in_byte(PIC2_CMD_PORT) << 8;
     return res;
 }
 
