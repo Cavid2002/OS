@@ -11,11 +11,6 @@ void idt_init()
 {
     Idescriptor.addr = (uint32_t)interruptTable;
     Idescriptor.size = sizeof(interruptTable) - 1;
-    interruptTable[0].flags = 0;
-    interruptTable[0].offset_high = 0;
-    interruptTable[0].offset_low = 0;
-    interruptTable[0].reserved = 0;
-    interruptTable[0].selector = 0;
     load_idt(&Idescriptor);
 }
 
@@ -71,10 +66,25 @@ void software_interrupt_routine()
     terminal_puts("INTERRUPT!!");
 }
 
+void keyboard_interrupt_routine()
+{
+    terminal_puts("KEYBOARD INTERRUPT");
+    in_byte(0x60);
+    PIC_send_eoi(1);
+}
+
 void interrupt_init()
 {
     PIC_remap(0x20, 0x28);
     idt_init_exceptions();
     idt_entry_create(software_interrupt, 0x40, GATE_TYPE_INT);
+    idt_entry_create(keyboard_interrupt, 0x21, GATE_TYPE_INT);
     idt_init();
+    
+    for(int i = 0; i < 16; i++)
+    {
+        PIC_set_mask(i);
+    }
+
+    PIC_unmask(1);
 }

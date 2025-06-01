@@ -22,10 +22,8 @@ uint32_t strlen(const char* str)
     return len;
 }
 
-void terminal_init()
+void terminal_clean()
 {
-    POS_X = 0;
-    POS_Y = 0;
     for(uint16_t i = 0; i < HEIGHT; i++)
     {
         for(uint16_t j = 0; j < WIDTH; j++)
@@ -33,6 +31,13 @@ void terminal_init()
             addr[i * WIDTH + j] = entry(0x0f, ' ');
         }
     }
+}
+
+void terminal_init()
+{
+    POS_X = 0;
+    POS_Y = 0;
+    terminal_clean();
 }
 
 

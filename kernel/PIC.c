@@ -2,6 +2,11 @@
 #include "../include/portio.h"
 
 
+void io_wait()
+{
+    out_byte(0x80, 0);
+}
+
 void PIC_send_eoi(uint8_t irq)
 {
     if(irq >= 8)
@@ -79,18 +84,26 @@ void PIC_unmask(uint16_t line)
 void PIC_remap(uint8_t offset1, uint8_t offset2)
 {
     out_byte(PIC1_CMD_PORT, 0x11);
+    io_wait();
     out_byte(PIC2_CMD_PORT, 0x11);
-
+    io_wait();
 
     out_byte(PIC1_DATA_PORT, offset1);
+    io_wait();
     out_byte(PIC2_DATA_PORT, offset2);
+    io_wait();
 
+    
     out_byte(PIC1_DATA_PORT, 0x04);
+    io_wait();
     out_byte(PIC2_DATA_PORT, 0x02);
+    io_wait();
 
-
+    
     out_byte(PIC1_DATA_PORT, 0x01);
+    io_wait();
     out_byte(PIC2_DATA_PORT, 0x01);
+    io_wait();
 
     out_byte(PIC1_CMD_PORT, 0x00);
     out_byte(PIC2_CMD_PORT, 0x00);
