@@ -1,6 +1,8 @@
 [extern software_interrupt_routine]
+[extern keyboard_interrupt_routine]
 global load_idt
 global software_interrupt
+global keyboard_interrupt
 global call_software_interrupt
 
 
@@ -53,6 +55,13 @@ software_interrupt:
     pushad
     cld
     call software_interrupt_routine
+    popad
+    iret
+
+keyboard_interrupt:
+    pushad
+    cld
+    call keyboard_interrupt_routine
     popad
     iret
 

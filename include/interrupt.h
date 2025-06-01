@@ -25,6 +25,7 @@ typedef struct
 
 extern void load_idt(IdtDescriptor* addr);
 extern void software_interrupt();
+extern void keyboard_interrupt();
 extern void interrupt_init();
 extern void call_software_interrupt();
 
