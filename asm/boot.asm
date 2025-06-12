@@ -1,34 +1,113 @@
 [bits 16]
-[org 0x7c00]
+
+_init:
+    mov ax, 0x07C0
+    mov ds, ax
+    mov ss, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+    jmp 0x07C0:_main
+
+
+_error_disk:
+    mov ah, 0x0e 
+    mov al, 'D'
+    int 0x10
+    jmp $
+
+_error_mem:
+    mov ah, 0x0e
+    mov al, 'M'
+    int 0x10
+    jmp $
+
+do_e820:
+    xor ax, ax
+    mov es, ax
+    mov di, MEM_LIST_START + 4            ; memory detection
+	xor ebx, ebx
+	xor bp, bp
+	mov edx, 0x0534D4150
+	mov eax, 0xe820
+	mov [es:di + 20], dword 1
+	mov ecx, 24
+	int 0x15
+	jc short .failed
+	mov edx, 0x0534D4150
+	cmp eax, edx
+	jne short .failed
+	test ebx, ebx
+	je short .failed
+	jmp short .jmpin
+.e820lp:
+	mov eax, 0xe820
+	mov [es:di + 20], dword 1
+	mov ecx, 24
+	int 0x15
+	jc short .e820f
+	mov edx, 0x0534D4150
+.jmpin:
+	jcxz .skipent
+	cmp cl, 20
+	jbe short .notext
+	test byte [es:di + 20], 1
+	je short .skipent
+.notext:
+	mov ecx, [es:di + 8]
+	or ecx, [es:di + 12]
+	jz .skipent
+	inc bp
+	add di, 24
+.skipent:
+	test ebx, ebx
+	jne short .e820lp
+.e820f:
+	mov [es:MEM_LIST_START], bp
+	clc
+    mov ah, 0x0e
+    mov al, 'S'
+    int 0x10
+	ret
+.failed:
+	stc
+    call _error_mem
+	ret                             
+
+enable_a20:
+    in al, 0x92                    
+    or al, 2
+    out 0x92, al
+    ret
+
+load_sectors:
+    mov si, packet_addr_structure   ;load_kernel
+    mov ah, 0x42
+    mov dl, 0x80
+    int 0x13
+    jc _error_disk
+    ret
+
 
 _main:
     mov ah, 0x0e
-    mov al, 'H'
+    mov al, [START_LETTER]
+    int 0x10
+    call do_e820
+    call load_sectors 
+    call enable_a20
+
+
+    mov ah, 0x0e
+    mov al, [PROTECTED_LETTER]    ;enable_prtc_mode
     int 0x10
 
-load_kernel:
-    mov ah, 0x02    ; BIOS function to read sectors
-    mov al, 0x0F    ; Number of sectors to read 
-    mov ch, 0x00    ; Cylinder 0
-    mov cl, 0x02    ; Starting Sector 2
-    mov dh, 0x00    ; Head number
-    mov dl, 0x80    ; Hard disk drive
-    mov bx, 0
-    mov es, bx
-    mov bx, KERNEL_ADDR
-    int 0x13
-enable_a20:
-    in al, 0x92
-    or al, 2
-    out 0x92, al
-
-enable_prtc_mode:
     cli
-    lgdt [gtd_descriptor]
+    lgdt [gdt_descriptor]
     mov eax, cr0
     or eax, 1
     mov cr0, eax
-    jmp 0x08:start_ptct_mode
+    jmp 0x08:start_ptct_mode + 0x7C00
 
 [bits 32]
 start_ptct_mode:
@@ -39,49 +118,66 @@ start_ptct_mode:
     mov gs, ax
     mov esp, STACK_ADDR
     mov ebp, esp
-
+    
 begin:
     mov al, 'A'
     mov ah, 0x0f
     mov [0xb8000], ax
-    call KERNEL_ADDR   
-
-loop:
-    jmp loop
-
-
-
+    jmp 0x08:0x7E00
 
 KERNEL_ADDR equ 0x7E00
-STACK_ADDR equ 0x7B00
+STACK_ADDR equ 0x7C00
+MEM_LIST_START equ 0x0700
 
-gtd_start:
-gtd_null:
-    dd 0x00000000
-    dd 0x00000000
-gtd_code:
+packet_addr_structure:
+    db 0x10        ; packet size (16 bytes)
+    db 0x00           ; reserved
+    dw 0x000F        ; number of sectors to read (0xF)
+    dw 0x7E00      ; offset of buffer
+    dw 0x0000         ; segment of buffer
+    dd 0x2         ; starting LBA (sector 2)
+    dd 0x0
+    
+
+
+gdt_start:
+;gdt_null
+gdt_descriptor:
+    dw gdt_end - gdt_start - 1
+    dd gdt_start + 0x7C00
+    dw 0x00
+;kernel_gdt_code
     dw 0xFFFF
     dw 0x0000
     db 0x00
-    db 10011011b
+    db 10011010b
     db 11001111b 
     db 0x00
-gtd_data:
+;kernel_gdt_data
     dw 0xFFFF
     dw 0x0000
     db 0x00
     db 10010010b
     db 11001111b
     db 0x00
-gtd_end:
+;user_gdt_code
+    dw 0xFFFF
+    dw 0x0000
+    db 0x00
+    db 11111010b
+    db 11001111b
+    db 0x00
+;user_gdt_data
+    dw 0xFFFF
+    dw 0x0000
+    db 0x00
+    db 11110010b
+    db 11001111b
+    db 0x00
+;task_segment 
+gdt_end:
 
-gtd_descriptor:
-    dw gtd_end - gtd_start - 1
-    dd gtd_start
+START_LETTER: db 'F'
+PROTECTED_LETTER: db 'P'
 
-
-times 510 - ($ - $$) db 0x00
-dw 0xaa55
-
-
-
+times 512 - ($ - $$) db 0x00

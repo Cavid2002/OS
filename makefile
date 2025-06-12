@@ -8,8 +8,8 @@ OBJS = ./bin/entry.o ./bin/kernel.o ./bin/VGA.o \
 		./bin/interrupt.o ./bin/PIC.o ./bin/portio.o \
 		./bin/interrupt_wrapper.o
 
-os.bin: ./bin/boot.bin ./bin/kernel.bin
-	cat ./bin/boot.bin ./bin/kernel.bin > ./os.bin
+os.bin: ./bin/boot.bin ./bin/kernel.bin ./bin/mbr.bin
+	cat ./bin/mbr.bin ./bin/boot.bin ./bin/kernel.bin > ./os.bin
 	truncate --size 5M ./os.bin
 
 ./bin/kernel.bin: $(OBJS)
@@ -19,6 +19,8 @@ os.bin: ./bin/boot.bin ./bin/kernel.bin
 	mkdir -p ./bin
 	$(ASM) -f bin ./asm/boot.asm -o ./bin/boot.bin
 
+./bin/mbr.bin: ./asm/mbr.asm
+	$(ASM) -f bin ./asm/mbr.asm -o ./bin/mbr.bin
 
 ./bin/kernel.o: ./kernel/kernel.c
 	$(CC) $(CFLAGS) ./kernel/kernel.c -o ./bin/kernel.o
@@ -53,3 +55,9 @@ run:
 
 clean:
 	rm ./bin/* ./os.bin
+
+dasm-32:
+	ndisasm -b 32 os.bin > bit32.txt
+
+dasm-16:
+	ndisasm -b 16 os.bin > bit16.txt

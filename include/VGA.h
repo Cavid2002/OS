@@ -12,4 +12,5 @@ void terminal_write(const char* str, uint32_t len);
 void terminal_puts(const char* str);
 void terminal_clean();
 
+
 #endif

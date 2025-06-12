@@ -3,8 +3,8 @@
 #include "../include/PIC.h"
 
 
-static IdtEntry interruptTable[256];
-static IdtDescriptor Idescriptor;
+static idt_entry interruptTable[256];
+static idt_descriptor Idescriptor;
 
 
 void idt_init()

@@ -14,16 +14,16 @@ typedef struct
     uint8_t reserved;
     uint8_t flags;
     uint16_t offset_high;
-}__attribute__((packed)) IdtEntry;
+}__attribute__((packed)) idt_entry;
 
 typedef struct
 {
     uint16_t size;
     uint32_t addr;
-}__attribute__((packed)) IdtDescriptor;
+}__attribute__((packed)) idt_descriptor;
 
 
-extern void load_idt(IdtDescriptor* addr);
+extern void load_idt(idt_descriptor* addr);
 extern void software_interrupt();
 extern void keyboard_interrupt();
 extern void interrupt_init();
