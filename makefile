@@ -1,12 +1,12 @@
 ASM = nasm
 CC = gcc
 
-CFLAGS = -ffreestanding -m32 -masm=intel -c -nostdlib -fno-pie
+CFLAGS = -ffreestanding -m32 -masm=intel -c -nostdlib -fno-pie -fno-stack-protector
 LDFLAGS = -m elf_i386 -T ./kernel/linker.ld --oformat=binary
 
 OBJS = ./bin/entry.o ./bin/kernel.o ./bin/VGA.o \
 		./bin/interrupt.o ./bin/PIC.o ./bin/portio.o \
-		./bin/interrupt_wrapper.o
+		./bin/interrupt_wrapper.o ./bin/printf.o
 
 os.bin: ./bin/boot.bin ./bin/kernel.bin ./bin/mbr.bin
 	cat ./bin/mbr.bin ./bin/boot.bin ./bin/kernel.bin > ./os.bin
@@ -48,7 +48,10 @@ os.bin: ./bin/boot.bin ./bin/kernel.bin ./bin/mbr.bin
 ./bin/interrupt_wrapper.o: ./asm/interrupt_wrapper.asm
 	$(ASM) -f elf32 ./asm/interrupt_wrapper.asm -o ./bin/interrupt_wrapper.o
 
-.PHONY: run clean
+./bin/printf.o: ./include/printf.h ./kernel/printf.c
+	$(CC) $(CFLAGS) ./kernel/printf.c -o ./bin/printf.o
+
+.PHONY: run clean dasm-32 dasm-16
 
 run:
 	qemu-system-i386 -hda ./os.bin

@@ -1,15 +1,22 @@
 [extern software_interrupt_routine]
 [extern keyboard_interrupt_routine]
-global load_idt
-global software_interrupt
-global keyboard_interrupt
-global call_software_interrupt
+[extern exception_handler]
+[global load_idt]
+[global software_interrupt]
+[global keyboard_interrupt]
+[global call_software_interrupt]
 
 
 %macro isr_exception 1
-global isr_exception_%1
+[global isr_exception_%1]
 isr_exception_%1:
+    pushad
+    cld
+    push dword %1
     call exception_handler
+    add esp, 4
+    popad
+    jmp $
     iret
 %endmacro
 
@@ -47,9 +54,6 @@ isr_exception 30
 isr_exception 31
 
 
-exception_handler:
-    cli
-    hlt
 
 software_interrupt:
     pushad

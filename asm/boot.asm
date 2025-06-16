@@ -33,43 +33,43 @@ do_e820:
 	mov [es:di + 20], dword 1
 	mov ecx, 24
 	int 0x15
-	jc short .failed
+	jc short _failed
 	mov edx, 0x0534D4150
 	cmp eax, edx
-	jne short .failed
+	jne short _failed
 	test ebx, ebx
-	je short .failed
-	jmp short .jmpin
-.e820lp:
+	je short _failed
+	jmp short _jmpin
+_e820lp:
 	mov eax, 0xe820
 	mov [es:di + 20], dword 1
 	mov ecx, 24
 	int 0x15
-	jc short .e820f
+	jc short _e820f
 	mov edx, 0x0534D4150
-.jmpin:
-	jcxz .skipent
+_jmpin:
+	jcxz _skipent
 	cmp cl, 20
-	jbe short .notext
+	jbe short _notext
 	test byte [es:di + 20], 1
-	je short .skipent
-.notext:
+	je short _skipent
+_notext:
 	mov ecx, [es:di + 8]
 	or ecx, [es:di + 12]
-	jz .skipent
+	jz _skipent
 	inc bp
 	add di, 24
-.skipent:
+_skipent:
 	test ebx, ebx
-	jne short .e820lp
-.e820f:
+	jne short _e820lp
+_e820f:
 	mov [es:MEM_LIST_START], bp
 	clc
     mov ah, 0x0e
     mov al, 'S'
     int 0x10
 	ret
-.failed:
+_failed:
 	stc
     call _error_mem
 	ret                             
@@ -81,11 +81,15 @@ enable_a20:
     ret
 
 load_sectors:
-    mov si, packet_addr_structure   ;load_kernel
+    xor ax, ax
+    mov ds, ax
+    mov si, packet_addr_structure + 0x7C00   ;load_kernel
     mov ah, 0x42
-    mov dl, 0x80
+    mov dl, [0x06FD]
     int 0x13
     jc _error_disk
+    mov ax, 0x07C0
+    mov ds, ax
     ret
 
 
