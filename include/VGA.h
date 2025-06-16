@@ -10,6 +10,7 @@ void putchar(uint8_t c);
 void terminal_init();
 void terminal_write(const char* str, uint32_t len);
 void terminal_puts(const char* str);
+void terminal_printf(const char* format, ...);
 void terminal_clean();
 
 

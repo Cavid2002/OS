@@ -6,7 +6,10 @@ void kernel_main()
 {
     terminal_init();
 
+    int a = 12 / 0;
+
     terminal_puts("Hello World");
+    terminal_printf("\n%d %X %c\n", 256, 256, 'l');
 
     interrupt_init();
 

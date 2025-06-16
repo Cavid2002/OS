@@ -23,6 +23,10 @@ void idt_entry_create(void (func)(), uint8_t num, uint8_t type)
     interruptTable[num].selector = 0x0008;
 }
 
+void exception_handler(uint32_t num)
+{
+    terminal_printf("execption handler %d", num);
+}
 
 void idt_init_exceptions()
 {

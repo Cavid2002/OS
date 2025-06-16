@@ -1,5 +1,5 @@
 #include "../include/VGA.h"
-
+#include "../include/printf.h"
 
 static uint16_t* addr = (uint16_t*)0xb8000;
 static const uint16_t WIDTH = 80;
@@ -66,4 +66,67 @@ void terminal_write(const char* str, uint32_t len)
 void terminal_puts(const char* msg)
 {
     terminal_write(msg, strlen(msg));
+}
+
+
+void terminal_parse_format(uint8_t format_specifier, uint32_t value)
+{
+    uint8_t arr[50];
+    uint32_t size = 0;
+    switch (format_specifier)
+    {
+    case 'd': case 'i':
+        dec_to_str(arr, &size, value);
+        break;
+    case 'X': 
+        hex_to_str(arr, &size, value);
+        break;
+    case 'c':
+        terminal_putchar((uint8_t)(value & 0xFF));
+        return;
+        break;
+    default:
+        break;
+    }
+
+    for(int i = 0; i < size; i++)
+    {
+        terminal_putchar(arr[i]);
+    }
+}
+
+void terminal_printf(const char* format, ...)
+{
+    uint32_t* argp = (uint32_t*)(&format);
+    argp++;
+    
+    for(int i = 0; format[i] != '\0'; i++)
+    {
+        if(format[i] == '%')
+        {
+            terminal_parse_format(format[++i], *argp);
+            argp++;
+            continue;
+        }
+
+        if(format[i] == '\n')
+        {
+            POS_Y = (POS_Y >= HEIGHT) ? 0 : POS_Y + 1;
+            POS_X = 0;
+            continue;
+        }
+
+        if(format[i] == '\t')
+        {
+            POS_X += 4;
+            if(POS_X >= WIDTH)
+            {
+                POS_Y++;
+                POS_X = POS_X - WIDTH;
+            }
+            continue;
+        }
+
+        terminal_putchar(format[i]);
+    }
 }
