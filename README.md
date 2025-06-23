@@ -13,8 +13,18 @@ HeliOS is a 32-bit operating system kernel developed in C and Assembly for the x
 
 Each component is designed to provide students and developers with hands-on experience in understanding key principles of operating system design and computer architecture. The target architecture is choosen to be x86 as this architecture is the dominant in PC market. 
 
-## The Reader ##
+## Important Notice ##
 
-Most well-known books on operating systems focus primarily on theoretical concepts and ideas related to existing environments, without offering practical guidance on how to create an operating system from scratch. While resources like [osdev.org](https://wiki.osdev.org/) provide valuable information with the doucumetation references to all kinds of hardware, they often assume a certain level of prior knowledge, which can make them challenging for beginners. This document aims to fill that gap by offering a detailed, step-by-step explanation of each component of the operating system as development progresses, making it easier for readers to understand and implement the concepts themselves.
+Project is at the stage of implementing 2-stage bootlader which will be able to locate the kernel binary in filesystem and pass the control to it.
 
+## Building and Running ##
+
+To compile and get the binary image just run
+```
+make 
+```
+It would generate os.img file that can be loaded to any disk using the following command:
+```
+sudo cat os.img > /dev/[block_device]
+```
 

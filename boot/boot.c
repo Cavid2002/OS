@@ -1,21 +1,22 @@
 #include <stdint.h>
 #include "../include/VGA.h"
 #include "../include/interrupt.h"
+#include "../include/memory.h"
 
-void kernel_main()
+void boot_main()
 {
     terminal_init();
 
-    int a = 12 / 0;
 
     terminal_puts("Hello World");
-    terminal_printf("\n%d %X %c\n", 256, 256, 'l');
+    terminal_printf("\n%d %X %c\n", -256, 256, 'l');
 
     interrupt_init();
 
-    call_software_interrupt();
+
+    init_mem_list();
     while(1)
     {
-        
+
     }
 }

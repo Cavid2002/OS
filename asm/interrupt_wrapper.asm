@@ -16,6 +16,7 @@ isr_exception_%1:
     call exception_handler
     add esp, 4
     popad
+    cli
     jmp $
     iret
 %endmacro
