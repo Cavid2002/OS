@@ -1,12 +1,14 @@
 [bits 16]
 
 _init:
+    pop dx
     mov ax, 0x07C0
     mov ds, ax
     mov ss, ax
     mov es, ax
     mov fs, ax
     mov gs, ax
+    mov [disk_num], dx
     jmp 0x07C0:_main
 
 
@@ -81,15 +83,11 @@ enable_a20:
     ret
 
 load_sectors:
-    xor ax, ax
-    mov ds, ax
-    mov si, packet_addr_structure + 0x7C00   ;load_kernel
+    mov si, packet_addr_structure;load_kernel
     mov ah, 0x42
-    mov dl, [0x06FD]
+    mov dx, [disk_num]
     int 0x13
     jc _error_disk
-    mov ax, 0x07C0
-    mov ds, ax
     ret
 
 
@@ -132,6 +130,8 @@ begin:
 KERNEL_ADDR equ 0x7E00
 STACK_ADDR equ 0x7C00
 MEM_LIST_START equ 0x0700
+
+disk_num: dw 0x00
 
 packet_addr_structure:
     db 0x10        ; packet size (16 bytes)

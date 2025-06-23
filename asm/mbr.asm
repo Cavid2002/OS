@@ -10,8 +10,9 @@ mbr_realloc:
     mov es, ax
     mov ss, ax
     mov sp, 0x7C00
+    mov bp, sp
     
-    mov [0x1FD + 0x7C00], dl
+    push dx
 
     mov si, 0x7C00
     mov di, 0x500
@@ -48,7 +49,7 @@ read_bootloader_loop:
 boot_partition_found:
     mov si, packet_addr_structure + 0x0500
     mov ah, 0x42
-    mov dl, [0x1FD + 0x0500]
+    mov dx, [bp - 2]
     int 0x13
     jc _disk_error
     jmp 0x00:0x7C00
