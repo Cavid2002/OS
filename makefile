@@ -9,10 +9,10 @@ OBJS = ./bin/entry.o ./bin/boot.o ./bin/VGA.o \
 		./bin/interrupt_wrapper.o ./bin/printf.o \
 		./bin/memory.o
 
-os.bin: ./bin/init.bin ./bin/boot.bin ./bin/mbr.bin
-	cat ./bin/mbr.bin ./bin/init.bin ./bin/boot.bin > ./os.bin
-	cp ./os.bin ./os.img
-	truncate -s 100k ./os.img
+bootloader.bin: ./bin/init.bin ./bin/boot.bin ./bin/mbr.bin
+	cat ./bin/mbr.bin ./bin/init.bin ./bin/boot.bin > ./bootloader.bin
+	cp ./bootloader.bin ./bootloader.img
+	truncate -s 100k ./bootloader.img
 
 ./bin/boot.bin: $(OBJS)
 	ld $(LDFLAGS) $(OBJS) -o ./bin/boot.bin
@@ -59,13 +59,13 @@ os.bin: ./bin/init.bin ./bin/boot.bin ./bin/mbr.bin
 .PHONY: run clean dasm-32 dasm-16
 
 run:
-	qemu-system-i386 -hda ./os.img
+	qemu-system-i386 -hda ./bootloader.img
 
 clean:
-	rm ./bin/* ./os.bin
+	rm -f ./bin/* ./bootloader.bin ./bootloader.img
 
 dasm-32:
-	ndisasm -b 32 os.bin > bit32.txt
+	ndisasm -b 32 bootloader.bin > bit32.txt
 
 dasm-16:
-	ndisasm -b 16 os.bin > bit16.txt
+	ndisasm -b 16 bootloader.bin > bit16.txt

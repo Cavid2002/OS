@@ -72,7 +72,7 @@ void software_interrupt_routine()
 
 void keyboard_interrupt_routine()
 {
-    terminal_puts("KEYBOARD INTERRUPT");
+    terminal_puts("KEYBOARD INTERRUPT ");
     in_byte(0x60);
     PIC_send_eoi(1);
 }
