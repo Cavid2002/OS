@@ -3,6 +3,17 @@
 #include "../include/interrupt.h"
 #include "../include/memory.h"
 
+
+typedef struct 
+{
+    uint32_t mmap_addr;
+    uint32_t mmap_size;
+    uint8_t drive_num;
+    uint32_t vga_buff_addr;
+    uint32_t vga_buff_size;
+} boot_data;
+
+
 void boot_main()
 {
     terminal_init();
