@@ -16,9 +16,11 @@ typedef struct
 typedef struct 
 {
     uint32_t partition_table_addr;
-    uint32_t disk_num;
+    uint8_t boot_disk_num;
+    uint32_t mmap_addr;
 } boot_data;
 
 
+extern int read_drive_num();
 
 #endif 

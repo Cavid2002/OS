@@ -52,6 +52,8 @@
 #define ATAPIO_STATUS_RDY   0x40
 #define ATAPIO_STATUS_BSY   0x80
 
+#define ATAPIO_DEV_TYPE_ATA     1
+#define ATAPIO_DEV_TYPE_ATAPI   2
 
 typedef struct
 {
@@ -75,6 +77,15 @@ typedef struct
     uint16_t ctrl_base;
 } atapio_bus_regbase;
 
-int atapio_flush_cashe();
-
+void atapio_setup_address();
+int atapio_wait(uint8_t flag, uint16_t timeout);
+int atapio_bus_set();
+void atapio_select(uint8_t bus_num, uint8_t drive_num);
+int atapio_flush_cache();
+void atapio_software_reset(uint8_t bus_num);
+int atapio_identify(disk_packet_lba28* pack);
+uint8_t atapio_get_status();
+int atapio_read_lba28(disk_packet_lba28* pack);
+int atapio_write_lba28(disk_packet_lba28* pack);
+int atapio_init();
 #endif

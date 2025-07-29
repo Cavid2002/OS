@@ -7,7 +7,7 @@ LDFLAGS = -static -m elf_i386 -T ./boot/linker.ld
 OBJS = ./bin/entry.o ./bin/boot.o ./bin/VGA.o \
 		./bin/interrupt.o ./bin/PIC.o ./bin/portio.o \
 		./bin/interrupt_wrapper.o ./bin/printf.o \
-		./bin/memory.o
+		./bin/memory.o ./bin/delay.o ./bin/ATAPIO.o
 
 bootloader.bin: ./bin/init.bin ./bin/boot.bin ./bin/mbr.bin
 	cat ./bin/mbr.bin ./bin/init.bin ./bin/boot.bin > ./bootloader.bin
@@ -55,6 +55,12 @@ bootloader.bin: ./bin/init.bin ./bin/boot.bin ./bin/mbr.bin
 
 ./bin/memory.o: ./include/memory.h ./boot/memory.c
 	$(CC) $(CFLAGS) ./boot/memory.c -o ./bin/memory.o
+
+./bin/delay.o: ./include/delay.h ./boot/delay.c
+	$(CC) $(CFLAGS) ./boot/delay.c -o ./bin/delay.o
+
+./bin/ATAPIO.o: ./include/ATAPIO.h ./boot/ATAPIO.c
+	$(CC) $(CFLAGS) ./boot/ATAPIO.c -o ./bin/ATAPIO.o
 
 .PHONY: run clean dasm-32 dasm-16
 
