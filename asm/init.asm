@@ -83,7 +83,7 @@ enable_a20:
     ret
 
 load_sectors:
-    mov si, packet_addr_structure;load_kernel
+    mov si, packet_addr_structure   ;load_kernel
     mov ah, 0x42
     mov dx, [disk_num]
     int 0x13
@@ -120,11 +120,12 @@ start_ptct_mode:
     mov gs, ax
     mov esp, STACK_ADDR
     mov ebp, esp
-    
+
 begin:
     mov al, 'A'
     mov ah, 0x0f
     mov [0xb8000], ax
+    mov dx, [0x7C00 + disk_num]
     jmp 0x08:0x7E00
 
 KERNEL_ADDR equ 0x7E00
@@ -136,7 +137,7 @@ disk_num: dw 0x00
 packet_addr_structure:
     db 0x10        ; packet size (16 bytes)
     db 0x00           ; reserved
-    dw 0x000F        ; number of sectors to read (0xF)
+    dw 0x001F        ; number of sectors to read (0xF)
     dw 0x7E00      ; offset of buffer
     dw 0x0000         ; segment of buffer
     dd 0x2         ; starting LBA (sector 2)
