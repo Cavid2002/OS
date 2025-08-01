@@ -58,7 +58,7 @@
 typedef struct
 {
     uint32_t lba;
-    uint16_t* buff;
+    void* buff;
     uint8_t sector_count;
 } disk_packet_lba28;
 
@@ -66,7 +66,7 @@ typedef struct
 {
     uint32_t lba_low;
     uint16_t lba_high;
-    uint16_t* buff;
+    void* buff;
     uint8_t sector_count;
 } disk_packet_lba48;
 
@@ -77,6 +77,8 @@ typedef struct
     uint16_t ctrl_base;
 } atapio_bus_regbase;
 
+
+uint16_t get_identify_data(uint8_t index);
 void atapio_setup_address();
 int atapio_wait(uint8_t flag, uint16_t timeout);
 int atapio_bus_set();
