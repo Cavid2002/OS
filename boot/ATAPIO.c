@@ -7,10 +7,16 @@
 static atapio_bus_regbase ata_bus[2];
 static uint8_t cur_bus;
 static uint8_t cur_drive;
-static uint16_t identify_buff[256];
+static uint16_t cur_identify_buff[256];
+
+uint16_t get_identify_data(uint8_t index)
+{
+    return cur_identify_buff[index];
+}
 
 void atapio_setup_address()
 {
+    terminal_printf("[ATAPIO] SETTING ATAPIO ADDRESSES\n");
     ata_bus[0].io_base = ATAPIO_PRI_IO_BASE;
     ata_bus[0].ctrl_base = ATAPIO_PRI_CTRL_BASE;
 
@@ -48,6 +54,7 @@ int atapio_wait(uint8_t flag, uint16_t timeout)
 
 int atapio_bus_set()
 {
+    terminal_printf("[ATAPIO] SETTING BUSSES\n");
     uint16_t port = ata_bus[cur_bus].ctrl_base;
 
     out_byte(port + ATAPIO_REG_CTRL, 1 << 2);
@@ -61,7 +68,7 @@ int atapio_bus_set()
         terminal_printf("[ERROR-ATAPIO] init error\n");
         return -1;
     }
-
+    port = ata_bus[cur_bus].io_base;
     uint8_t error = in_byte(port + ATAPIO_REG_ERR);
 
     if(in_byte(port + ATAPIO_REG_SEC_COUNT) != 1
@@ -78,6 +85,7 @@ int atapio_bus_set()
         return ATAPIO_DEV_TYPE_ATA;
     }
 
+    terminal_printf("[ATAPIO] SOMETHING IS WRONG\n");
     return -1;
 }
 
@@ -114,6 +122,7 @@ void atapio_software_reset(uint8_t bus_num)
 
 int atapio_identify(disk_packet_lba28* pack)
 {
+    terminal_printf("ATAPIO IDENTIFY START...\n");
     uint16_t ret = 0;
     uint16_t* buff = pack->buff;
     uint16_t port = ata_bus[cur_bus].io_base;
@@ -134,7 +143,8 @@ int atapio_identify(disk_packet_lba28* pack)
     {
         buff[i] = in_byte(port + ATAPIO_REG_DATA);
     }
-    
+
+    terminal_printf("ATAPIO IDENTIFY SUCCESS!\n");
     return ret * 2;
 }
 
@@ -151,7 +161,7 @@ int atapio_read_lba28(disk_packet_lba28* pack)
     uint32_t lba = pack->lba;
     uint16_t* buff = pack->buff;
     uint16_t port = ata_bus[cur_bus].io_base;
-    uint8_t val = 0b11100000 | cur_drive << 4;
+    uint8_t val = 0b11100000 | (cur_drive << 4);
     
     
     out_byte(port + ATAPIO_REG_SEC_COUNT, pack->sector_count);
@@ -180,7 +190,7 @@ int atapio_write_lba28(disk_packet_lba28* pack)
 {
     uint16_t ret = 0;
     uint32_t lba = pack->lba;
-    uint16_t* buff = pack->buff;
+    uint16_t* buff = (uint16_t*)pack->buff;
     uint16_t port = ata_bus[cur_bus].io_base;
     uint8_t val = in_byte(port + ATAPIO_REG_SELECT);
     
@@ -188,7 +198,7 @@ int atapio_write_lba28(disk_packet_lba28* pack)
     out_byte(port + ATAPIO_REG_LBA_LOW, lba & 0x000000FF);
     out_byte(port + ATAPIO_REG_LBA_MID, (lba & 0x0000FF00) >> 8);
     out_byte(port + ATAPIO_REG_LBA_HIGH, (lba & 0x00FF0000) >> 16);
-    out_byte(port + ATAPIO_REG_SELECT, val | (lba & 0x0F000000) >> 24);
+    out_byte(port + ATAPIO_REG_SELECT, val | ((lba & 0x0F000000) >> 24));
     out_byte(port + ATAPIO_REG_CMD, 0x30);
 
     if(atapio_wait(ATAPIO_STATUS_DRQ, 1000) < 0)
@@ -213,10 +223,14 @@ int atapio_init()
         terminal_printf("[ERROR] ATA BUS NOT FOUND");
         return -1;
     }
-
+    disk_packet_lba28 pack;
+    pack.buff = cur_identify_buff;
+    pack.sector_count = 0;
+    pack.lba = 0;
     
     atapio_setup_address();
     atapio_select(0, 0);
-    return atapio_bus_set();
+    atapio_bus_set();
+    atapio_identify(&pack);
     
 }

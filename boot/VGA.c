@@ -31,6 +31,8 @@ void terminal_clean()
             addr[i * WIDTH + j] = entry(0x0f, ' ');
         }
     }
+    POS_X = 0;
+    POS_Y = 0;
 }
 
 void terminal_init()
@@ -78,7 +80,7 @@ void terminal_parse_format(uint8_t format_specifier, uint32_t value)
     case 'd': case 'i':
         dec_to_str(arr, &size, value);
         break;
-    case 'X': 
+    case 'X': case 'x':
         hex_to_str(arr, &size, value);
         break;
     case 'c':
