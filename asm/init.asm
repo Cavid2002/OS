@@ -131,6 +131,7 @@ begin:
 KERNEL_ADDR equ 0x7E00
 STACK_ADDR equ 0x7C00
 MEM_LIST_START equ 0x0700
+VBE_LIST_START equ 0x1000
 
 disk_num: dw 0x00
 

@@ -87,9 +87,9 @@ PT1:
     db 0x00
     db 0x00
     db 0x60     ;PT1_TYPE
-    db 0xFF     ;PT1_STOP_CHS
-    db 0xFF
-    db 0xFF
+    db 0x1F     ;PT1_STOP_CHS
+    db 0x00
+    db 0x00
     dd 0x01     ;PT1_LBA
     dd 0x10000  ;PT1_SECTOR_NUM
 PT1_end:
