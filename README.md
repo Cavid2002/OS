@@ -1,5 +1,9 @@
 # HeliOS: 32-bit Operating system #
 
+## Dependecies ##
+- **GCC(GNU C Complier)**
+- **NASM(Netwide Assembler)**
+
 ## Introduction: ##
 HeliOS is a 32-bit operating system kernel developed in C and Assembly for the x86 architecture. It forms the central focus of a master's thesis at ADA University and is designed as an educational tool for Computer Architecture and Operating Systems courses. The kernel is structured around the following key components:
 
@@ -26,5 +30,10 @@ make
 It would generate os.img file that can be loaded to any disk using the following command:
 ```
 sudo cat os.img > /dev/[block_device]
+```
+**Optionally** image can be run via **QEMU** virtual machine:
+
+```
+make run 
 ```
 
