@@ -71,21 +71,27 @@ void terminal_puts(const char* msg)
 }
 
 
-void terminal_parse_format(uint8_t format_specifier, uint32_t value)
+void terminal_parse_format(uint8_t format_specifier, uint32_t** arg_addr)
 {
     uint8_t arr[50];
     uint32_t size = 0;
     switch (format_specifier)
     {
     case 'd': case 'i':
-        dec_to_str(arr, &size, value);
+        dec32_to_str(arr, &size, *(*arg_addr));
+        *arg_addr = *arg_addr + 1;
         break;
-    case 'X': case 'x':
-        hex_to_str(arr, &size, value);
+    case 'x': case 'X':
+        hex32_to_str(arr, &size, *(*arg_addr));
+        *arg_addr = *arg_addr + 1;
         break;
     case 'c':
-        terminal_putchar((uint8_t)(value & 0xFF));
+        terminal_putchar((uint8_t)(*(*arg_addr) & 0xFF));
+        *arg_addr = *arg_addr + 1;
         return;
+        break;
+    case 'l': 
+        *arg_addr = *arg_addr + 2;
         break;
     default:
         break;
@@ -99,15 +105,13 @@ void terminal_parse_format(uint8_t format_specifier, uint32_t value)
 
 void terminal_printf(const char* format, ...)
 {
-    uint32_t* argp = (uint32_t*)(&format);
-    argp++;
-    
+    uint32_t* argp = (uint32_t*)(&format + 1);
+
     for(int i = 0; format[i] != '\0'; i++)
     {
         if(format[i] == '%')
         {
-            terminal_parse_format(format[++i], *argp);
-            argp++;
+            terminal_parse_format(format[++i], &argp);
             continue;
         }
 

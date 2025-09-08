@@ -1,6 +1,6 @@
 #include "../include/printf.h"
 
-void dec_to_str(uint8_t* buff, uint32_t* size, int value)
+void dec32_to_str(uint8_t* buff, uint32_t* size, int value)
 {
     uint32_t s = 0, i = 0;
     uint8_t temp;
@@ -41,7 +41,7 @@ void dec_to_str(uint8_t* buff, uint32_t* size, int value)
 }
 
 
-void hex_to_str(uint8_t* buff, uint32_t* size, int value)
+void hex32_to_str(uint8_t* buff, uint32_t* size, int value)
 {
     int s = 0, i = 0, temp;
 
@@ -69,5 +69,3 @@ void hex_to_str(uint8_t* buff, uint32_t* size, int value)
 
     *size = s;
 }
-
-
