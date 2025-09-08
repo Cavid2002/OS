@@ -28,6 +28,8 @@ extern void software_interrupt();
 extern void keyboard_interrupt();
 extern void interrupt_init();
 extern void call_software_interrupt();
+extern void disable_interrupt();
+extern void enable_interrupt();
 
 extern void isr_exception_0();
 extern void isr_exception_1();

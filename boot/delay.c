@@ -1,5 +1,12 @@
 
 #include "../include/delay.h"
+#include "../include/portio.h"
+
+void io_wait()
+{
+    out_byte(0x80, 0);
+}
+
 
 void delay_in_ns(uint32_t ns)
 {

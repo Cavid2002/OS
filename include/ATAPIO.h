@@ -52,8 +52,8 @@
 #define ATAPIO_STATUS_RDY   0x40
 #define ATAPIO_STATUS_BSY   0x80
 
-#define ATAPIO_DEV_TYPE_ATA     1
-#define ATAPIO_DEV_TYPE_ATAPI   2
+#define ATAPIO_DEV_TYPE_ATA     0x01
+#define ATAPIO_DEV_TYPE_ATAPI   0x08
 
 typedef struct
 {
@@ -75,6 +75,7 @@ typedef struct
 {
     uint16_t io_base;
     uint16_t ctrl_base;
+    uint8_t dev_type;
 } atapio_bus_regbase;
 
 

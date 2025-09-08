@@ -82,7 +82,15 @@ int atapio_bus_set()
     if(mid == 0 && high == 0)
     {
         terminal_printf("[SUCCESS] ATAPIO detected");
+        ata_bus[cur_bus].dev_type = ATAPIO_DEV_TYPE_ATA << (4 * cur_drive);
         return ATAPIO_DEV_TYPE_ATA;
+    }
+
+    if(mid == 0x14 && high == 0xEB)
+    {
+        terminal_printf("[SUCCESS] ATAPI detected\n");
+        ata_bus[cur_bus].dev_type = ATAPIO_DEV_TYPE_ATAPI << (4 * cur_drive);
+        return ATAPIO_DEV_TYPE_ATAPI;
     }
 
     terminal_printf("[ATAPIO] SOMETHING IS WRONG\n");
@@ -91,6 +99,7 @@ int atapio_bus_set()
 
 void atapio_select(uint8_t bus_num, uint8_t drive_num)
 {
+    if(cur_bus == bus_num && cur_drive == drive_num) return;
     cur_bus = bus_num;
     cur_drive = drive_num;
     uint16_t port = ata_bus[bus_num].io_base + ATAPIO_REG_SELECT;
@@ -123,6 +132,13 @@ void atapio_software_reset(uint8_t bus_num)
 int atapio_identify(disk_packet_lba28* pack)
 {
     terminal_printf("ATAPIO IDENTIFY START...\n");
+    uint8_t cmd = 0xEC;
+    if(ata_bus[cur_bus].dev_type & ATAPIO_DEV_TYPE_ATAPI << (4 * cur_drive))
+    {
+        terminal_printf("PACKET INTERFACE DETECTED");
+        cmd = 0xA1;
+    }
+
     uint16_t ret = 0;
     uint16_t* buff = pack->buff;
     uint16_t port = ata_bus[cur_bus].io_base;
@@ -131,7 +147,7 @@ int atapio_identify(disk_packet_lba28* pack)
     out_byte(port + ATAPIO_REG_LBA_MID, 0x00);
     out_byte(port + ATAPIO_REG_LBA_HIGH, 0x00);
 
-    out_word(port + ATAPIO_REG_CMD, 0xEC);
+    out_word(port + ATAPIO_REG_CMD, cmd);
     
     if(atapio_wait(ATAPIO_STATUS_DRQ, 1000) < 0)
     {
@@ -147,6 +163,7 @@ int atapio_identify(disk_packet_lba28* pack)
     terminal_printf("ATAPIO IDENTIFY SUCCESS!\n");
     return ret * 2;
 }
+
 
 uint8_t atapio_get_status()
 {
@@ -218,7 +235,7 @@ int atapio_write_lba28(disk_packet_lba28* pack)
 
 int atapio_init()
 {
-    if(in_byte(ata_bus[cur_bus].ctrl_base + ATAPIO_REG_STATUS) == 0xFF)
+    if(in_byte(ATAPIO_PRI_IO_BASE + ATAPIO_REG_STATUS) == 0xFF)
     {
         terminal_printf("[ERROR] ATA BUS NOT FOUND");
         return -1;
@@ -229,8 +246,29 @@ int atapio_init()
     pack.lba = 0;
     
     atapio_setup_address();
-    atapio_select(0, 0);
-    atapio_bus_set();
-    atapio_identify(&pack);
-    
+    for(int i = 0; i < 2; i++)
+    {
+        for(int j = 0; j < 2; j++)
+        {
+            atapio_select(i, j);
+            atapio_bus_set();
+            atapio_identify(&pack);
+        }
+    }
+
+}
+
+int disk_select(uint8_t id)
+{
+    disk_packet_lba28 pack;
+    pack.buff = cur_identify_buff;
+    pack.sector_count = 0;
+    pack.lba = 0;
+    atapio_select(id / 2, id % 2);
+    if(atapio_identify(&pack) == 256)
+    {
+        return -1;
+    }
+
+    return 0;
 }

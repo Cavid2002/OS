@@ -1,7 +1,7 @@
 #include "../include/interrupt.h"
 #include "../include/VGA.h"
 #include "../include/PIC.h"
-
+#include "../include/PS2.h"
 
 static idt_entry interruptTable[256];
 static idt_descriptor Idescriptor;
@@ -70,12 +70,6 @@ void software_interrupt_routine()
     terminal_puts("INTERRUPT!!");
 }
 
-void keyboard_interrupt_routine()
-{
-    terminal_puts("KEYBOARD INTERRUPT ");
-    in_byte(0x60);
-    PIC_send_eoi(1);
-}
 
 void interrupt_init()
 {

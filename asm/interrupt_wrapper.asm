@@ -1,10 +1,15 @@
 [extern software_interrupt_routine]
 [extern keyboard_interrupt_routine]
 [extern exception_handler]
+
+
+
 [global load_idt]
 [global software_interrupt]
 [global keyboard_interrupt]
 [global call_software_interrupt]
+[global disable_interrupt]
+[global enable_interrupt]
 
 
 %macro isr_exception 1
@@ -92,3 +97,25 @@ call_software_interrupt:
     mov esp, ebp
     pop ebp
     ret
+
+
+disable_interrupt:
+    push ebp
+    mov ebp, esp
+
+    cli
+
+    mov esp, ebp
+    pop ebp
+    ret
+
+enable_interrupt:
+    push ebp
+    mov ebp, esp
+
+    sti
+
+    mov esp, ebp
+    pop ebp
+    ret
+

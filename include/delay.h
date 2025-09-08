@@ -8,6 +8,6 @@
 void delay_in_ms(uint32_t ms);
 void delay_in_ns(uint32_t ns);
 void delay_in_us(uint32_t us);
-
+void io_wait();
 
 #endif

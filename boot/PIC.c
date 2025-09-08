@@ -1,11 +1,6 @@
 #include "../include/PIC.h"
 #include "../include/portio.h"
-
-
-void io_wait()
-{
-    out_byte(0x80, 0);
-}
+#include "../include/delay.h"
 
 void PIC_send_eoi(uint8_t irq)
 {
