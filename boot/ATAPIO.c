@@ -9,6 +9,11 @@ static uint8_t cur_bus;
 static uint8_t cur_drive;
 static uint16_t cur_identify_buff[256];
 
+static disk_cmd_entry cmd_queue[20];
+static uint8_t cmd_queue_tail = 0;
+static uint8_t cmd_queue_head = 0; 
+
+
 uint16_t get_identify_data(uint8_t index)
 {
     return cur_identify_buff[index];
@@ -126,7 +131,6 @@ void atapio_software_reset(uint8_t bus_num)
     val = 0b00000010;
     out_byte(port, val);
     delay_in_ms(1);
-    
 }
 
 int atapio_identify(disk_packet_lba28* pack)
@@ -258,6 +262,28 @@ int atapio_init()
 
 }
 
+void disk_cmd_enque(disk_cmd_entry* cmd)
+{
+    cmd_queue[cmd_queue_head % ATAPIO_CMD_QUEUE_SIZE] = *cmd;
+    cmd_queue_tail++;
+
+    // TODO
+}
+
+void disk_cmd_deque()
+{
+    uint8_t cur_head = cmd_queue_head % ATAPIO_CMD_QUEUE_SIZE;
+    uint8_t cur_tail = cmd_queue_tail % ATAPIO_CMD_QUEUE_SIZE;
+
+    if(cur_head == cur_tail)
+    {
+        return -1;
+    }
+
+    // TODO
+
+}
+
 int disk_select(uint8_t id)
 {
     disk_packet_lba28 pack;
@@ -265,7 +291,7 @@ int disk_select(uint8_t id)
     pack.sector_count = 0;
     pack.lba = 0;
     atapio_select(id / 2, id % 2);
-    if(atapio_identify(&pack) == 256)
+    if(atapio_identify(&pack) != 256)
     {
         return -1;
     }

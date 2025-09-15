@@ -1,4 +1,5 @@
 OUTPUT_FORMAT("binary")
+ENTRY(terminal_printf)
 
 SECTIONS
 {

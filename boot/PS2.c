@@ -5,19 +5,73 @@
 #include "../include/PIC.h"
 
 static  uint8_t ps2_dual_channel_precense = 1;
-
-static uint8_t keyboar_buff[KEYBOARD_BUFF_SIZE];
-static uint8_t read_ptr = 0;
-static uint8_t write_ptr = 0;
 static uint8_t cur_device = 0;
 
 
-void keyboard_interrupt_routine()
-{
-    terminal_puts("KEYBOARD INTERRUPT");
-    in_byte(0x60);
+char scancode_map_set2[128] = {
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, '\t','`', 0,
+    0, 0, 0, 0, 0, 'q', '1', 0,
+    0, 0, 'z', 's', 'a', 'w', '2', 0,
+    0, 'c', 'x', 'd', 'e', '4', '3', 0,
+    0, ' ', 'v', 'f', 't', 'r', '5', 0,
+    0, 'n', 'b', 'h', 'g', 'y', '6', 0,
+    0, 0, 'm', 'j', 'u', '7', '8', 0,
+    0, ',', 'k', 'i', 'o', '0', '9', 0,
+    0, '.', '/', 'l', ';', 'p', '-', 0,
+    0, 0, '\'', 0, '[', '=', 0, 0,
+    0, 0, '\n', ']', 0, '\\', 0, 0,
+    0, 0, 0, 0, 0, 0, '\b', 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+};
+
+// Shifted mapping (what you get when Shift is held)
+char scancode_map_set2_shifted[128] = {
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, '\t','~', 0,
+    0, 0, 0, 0, 0, 'Q', '!', 0,
+    0, 0, 'Z', 'S', 'A', 'W', '@', 0,
+    0, 'C', 'X', 'D', 'E', '$', '#', 0,
+    0, ' ', 'V', 'F', 'T', 'R', '%', 0,
+    0, 'N', 'B', 'H', 'G', 'Y', '^', 0,
+    0, 0, 'M', 'J', 'U', '&', '*', 0,
+    0, '<', 'K', 'I', 'O', ')', '(', 0,
+    0, '>', '?', 'L', ':', 'P', '_', 0,
+    0, 0, '"', 0, '{', '+', 0, 0,
+    0, 0, '\n', '}', 0, '|', 0, 0,
+    0, 0, 0, 0, 0, 0, '\b', 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+};
+
+
+
+
+static int break_code = 0;
+static int extended_code = 0;
+
+void keyboard_interrupt_routine() {
+    uint8_t sc = in_byte(PS2_DATA);
+
+    if (sc == 0xF0)break_code = 1;
+    else if (sc == 0xE0) extended_code = 1;
+    else 
+    {
+        if (!break_code)
+        {
+            char ch = scancode_map_set2[sc];
+            if (ch) terminal_printf("%c", ch);
+        }
+        break_code = 0;
+        extended_code = 0;
+    }
+
     PIC_send_eoi(1);
 }
+
 
 
 void ps2_flush_output_buffer()
@@ -80,11 +134,10 @@ uint8_t ps2_read_data()
     return ret;
 }
 
-void ps2_send_data_port2(uint8_t data)
+void ps2_write_data2(uint8_t data)
 {
     ps2_write_cmd(0xD4);
     ps2_write_data(data);
-    
 }
 
 
