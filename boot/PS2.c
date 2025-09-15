@@ -27,7 +27,7 @@ char scancode_map_set2[128] = {
     0, 0, 0, 0, 0, 0, 0, 0,
 };
 
-// Shifted mapping (what you get when Shift is held)
+// Shifted mapping
 char scancode_map_set2_shifted[128] = {
     0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, '\t','~', 0,
