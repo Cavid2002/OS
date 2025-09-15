@@ -55,12 +55,15 @@
 #define ATAPIO_DEV_TYPE_ATA     0x01
 #define ATAPIO_DEV_TYPE_ATAPI   0x08
 
+#define ATAPIO_CMD_QUEUE_SIZE   20
+
 typedef struct
 {
     uint32_t lba;
     void* buff;
     uint8_t sector_count;
 } disk_packet_lba28;
+
 
 typedef struct
 {
@@ -78,6 +81,12 @@ typedef struct
     uint8_t dev_type;
 } atapio_bus_regbase;
 
+
+typedef struct
+{
+    disk_packet_lba28 pack;
+    uint8_t cmd;
+} disk_cmd_entry;
 
 uint16_t get_identify_data(uint8_t index);
 void atapio_setup_address();

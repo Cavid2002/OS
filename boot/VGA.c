@@ -86,7 +86,20 @@ void terminal_parse_format(uint8_t format_specifier, uint32_t** arg_addr)
         *arg_addr = *arg_addr + 1;
         break;
     case 'c':
-        terminal_putchar((uint8_t)(*(*arg_addr) & 0xFF));
+        char c = (uint8_t)(*(*arg_addr) & 0xFF);
+        if(c == '\n')
+        {
+            POS_Y = (POS_Y >= HEIGHT) ? 0 : POS_Y + 1;
+            POS_X = 0;
+        }
+        else if(c == '\b')
+        {
+            
+        }
+        else
+        {
+            terminal_putchar(c);
+        }
         *arg_addr = *arg_addr + 1;
         return;
         break;
