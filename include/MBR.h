@@ -5,6 +5,7 @@
 
 #define MBR_TABLE_SIZE      4
 #define EXT_MAGIC_NUMBER    0x83
+#define SECTOR_SIZE         512
 
 
 typedef struct
