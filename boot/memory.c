@@ -1,12 +1,14 @@
 #include "../include/memory.h"
 #include "../include/VGA.h"
 
+#define PHYS_MEM_MAX 10
 
 static mmap_descriptor mdesc;
-
+static mmap_list_entry physmap[PHYS_MEM_MAX];
 
 void init_mem_list()
 {
+    int k = 0;
     mdesc.mmap_list_size = (*(uint32_t*)MEM_LIST_ADDR);
     mdesc.mmap_list = (mmap_list_entry*)(MEM_LIST_ADDR + 4);
     for(int i = 0; i < mdesc.mmap_list_size; i++)
@@ -15,8 +17,19 @@ void init_mem_list()
             mdesc.mmap_list[i].base_low,
             mdesc.mmap_list[i].lenght_low,
             mdesc.mmap_list[i].type);
+        if(mdesc.mmap_list[i].type == 1)
+        {
+            physmap[k].base_low = mdesc.mmap_list[i].base_low;
+            physmap[k].base_low = mdesc.mmap_list[i].base_high;
+            physmap[k].lenght_low = mdesc.mmap_list[i].lenght_low;
+            physmap[k].lenght_high = mdesc.mmap_list[i].lenght_high;
+            physmap[k].type = 1;
+            k++;
+        }
     }
+    
 }
+
 
 
 void sort_mmap()

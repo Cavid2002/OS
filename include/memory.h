@@ -25,11 +25,12 @@ typedef struct
 } __attribute__((packed)) mmap_list_entry;
 
 
-typedef struct memory
+typedef struct
 {
     uint32_t mmap_list_size;
     mmap_list_entry* mmap_list;
 } mmap_descriptor;
+
 
 
 

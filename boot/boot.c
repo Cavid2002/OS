@@ -16,7 +16,6 @@ void boot_main()
     bd.mmap_addr = MEM_LIST_ADDR;
     terminal_init();
     interrupt_init();
-    read_vbe_data(&bd);
     init_mem_list();
     ps2_init();
     // int status = atapio_init();

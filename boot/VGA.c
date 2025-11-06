@@ -45,6 +45,38 @@ void terminal_init()
 
 void terminal_putchar(uint8_t c)
 {
+    if(c == '\n')
+    {
+        POS_Y = (POS_Y >= HEIGHT) ? 0 : POS_Y + 1;
+        POS_X = 0;
+        return;
+    }
+
+
+    if(c == '\b')
+    {
+        if(POS_X == 0)
+        {
+            POS_Y = (POS_Y != 0) ? POS_Y - 1 : 0;
+            POS_X = WIDTH - 1;
+            return; 
+        }
+        POS_X--;
+        addr[POS_Y * WIDTH + POS_X] = entry(0x0f, ' ');
+        return;
+    }
+
+    if(c == '\t')
+    {
+        POS_X += 4;
+        if(POS_X >= WIDTH)
+        {
+            POS_Y++;
+            POS_X = POS_X - WIDTH;
+        }
+        return;
+    }
+
     addr[POS_Y * WIDTH + POS_X] = entry(0x0f, c);
     if(++POS_X == WIDTH)
     {
@@ -87,19 +119,7 @@ void terminal_parse_format(uint8_t format_specifier, uint32_t** arg_addr)
         break;
     case 'c':
         char c = (uint8_t)(*(*arg_addr) & 0xFF);
-        if(c == '\n')
-        {
-            POS_Y = (POS_Y >= HEIGHT) ? 0 : POS_Y + 1;
-            POS_X = 0;
-        }
-        else if(c == '\b')
-        {
-            
-        }
-        else
-        {
-            terminal_putchar(c);
-        }
+        terminal_putchar(c);
         *arg_addr = *arg_addr + 1;
         return;
         break;
@@ -125,24 +145,6 @@ void terminal_printf(const char* format, ...)
         if(format[i] == '%')
         {
             terminal_parse_format(format[++i], &argp);
-            continue;
-        }
-
-        if(format[i] == '\n')
-        {
-            POS_Y = (POS_Y >= HEIGHT) ? 0 : POS_Y + 1;
-            POS_X = 0;
-            continue;
-        }
-
-        if(format[i] == '\t')
-        {
-            POS_X += 4;
-            if(POS_X >= WIDTH)
-            {
-                POS_Y++;
-                POS_X = POS_X - WIDTH;
-            }
             continue;
         }
 
