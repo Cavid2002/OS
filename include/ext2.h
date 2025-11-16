@@ -3,10 +3,13 @@
 
 #include <stdint.h>
 
-#define INODE_SIZE          128
-#define OFFSET_SUPERBLOCK   2
-#define OFFSET_BG_DESC      4
-#define BLOCK_SIZE          4096
+#define INODE_SIZE                      128
+#define OFFSET_SUPERBLOCK               2
+#define OFFSET_BG_DESC                  4
+#define BLOCK_SIZE                      4096
+#define SINGLE_INDIRECT_BLOCK_SIZE      BLOCK_SIZE * (BLOCK_SIZE / 4)
+#define DOUBLE_INDIRECT_BLOCK_SIZE      SINGLE_DIRECT_BLOCK_SIZE * (BLOCK_SIZE / 4)
+#define TRIPLE_INDIRECT_BLOCK_SIZE      DOUBLE_INDIRECT_BLOCK_SIZE * (BLOCK_SIZE / 4)
 
 #define EXT2_TYPE_FIFO      0x1000
 #define EXT2_TYPE_CHAR      0x2000
@@ -75,7 +78,7 @@ typedef struct
     uint32_t direct[12];
     uint32_t single_direct;
     uint32_t double_indirect;
-    uint32_t trip_indirect;
+    uint32_t triple_indirect;
     uint32_t reserved[2];
     uint32_t frag_addr;
     uint32_t reserved[3];
@@ -94,8 +97,13 @@ typedef struct
 typedef struct
 {
     uint32_t block_size;
+    uint32_t direct_block_size;
+    uint32_t single_indirect_block_size;
+    uint32_t double_indirect_block_size;
+    uint32_t triple_indirect_block_size;
     uint32_t block_n_sectors;
     uint32_t block_group_count;
+    
 } ext2_fs_data;
 
 
