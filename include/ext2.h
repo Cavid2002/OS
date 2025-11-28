@@ -111,6 +111,7 @@ typedef struct
 {
     inode in;
     uint32_t file_pointer;
+    uint32_t inode_num;
 } file_descriptor;
 
 #endif
