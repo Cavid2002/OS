@@ -7,6 +7,7 @@
 #define EXT_MAGIC_NUMBER    0x83
 #define SECTOR_SIZE         512
 
+static uint8_t mbr_buff[512];
 
 typedef struct
 {

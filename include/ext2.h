@@ -19,6 +19,10 @@
 #define EXT2_TYPE_SYMLINK   0xA000
 #define EXT2_TYPE_UNIX_SOCK 0xC000
 
+#define EXT2_SIGNATURE 0xEF53
+
+#define ROOT_INODE 2
+
 typedef struct
 {
     uint32_t total_inode_count;
@@ -46,7 +50,7 @@ typedef struct
     uint32_t r_user_id;
     uint32_t r_group_id;
     uint8_t unused[940];
-} super_block;
+} __attribute__((packed)) super_block;
 
 
 typedef struct
@@ -58,7 +62,7 @@ typedef struct
     uint16_t free_inode_count;
     uint16_t dir_count;
     uint8_t unused[14];
-} block_group_descriptor;
+} __attribute__((packed)) block_group_descriptor;
 
 
 typedef struct
@@ -82,7 +86,7 @@ typedef struct
     uint32_t reserved[2];
     uint32_t frag_addr;
     uint32_t reserved[3];
-} inode;
+} __attribute__((packed)) inode;
 
 typedef struct 
 {
@@ -90,8 +94,8 @@ typedef struct
     uint16_t entry_size;
     uint8_t name_lenght;
     uint8_t type;
-    uint8_t name[];
-} directory_entry;
+    uint8_t* name;
+} __attribute__((packed)) directory_entry;
 
 
 typedef struct

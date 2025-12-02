@@ -2,6 +2,7 @@
 #include "../include/ATAPIO.h"
 #include "../include/VGA.h"
 #include "../include/ext2.h"
+#include "../include/string.h"
 
 static uint8_t mbr_buff[512];
 static mbr_partition_table_entry* mbr_table;
@@ -12,24 +13,6 @@ static ext2_fs_data fs_data;
 static block_group_descriptor bg_table[10000];
 
 
-
-uint32_t memncpy(char* dst, char* src, uint32_t size)
-{
-    uint32_t i;
-    for(i = 0; i < size; i++)
-    {
-        dst[i] = src[i];
-    }
-    return i;
-}
-
-void memset(uint8_t* buff, uint8_t val, uint32_t size)
-{
-    while(size)
-    {
-        buff[--size] = val;
-    }
-}
 
 int read_mbr()
 {
@@ -47,6 +30,29 @@ int read_mbr()
     mbr_table = (mbr_partition_table_entry*)(mbr_buff + 0x1FE);
     return 0;
 }
+
+int clear_partition(uint8_t part_id)
+{
+    uint8_t buff[SECTOR_SIZE];
+    memset(buff, 0, SECTOR_SIZE);
+    uint32_t start = mbr_table[part_id].lba_start;
+    uint32_t stop = start + mbr_table[part_id].sector_num;
+
+    disk_packet_lba28 pack;
+    pack.buff = buff;
+    pack.sector_count = 1;
+    for(uint32_t i = start; i < stop; i++)
+    {
+        pack.lba = i;
+        if(atapio_write_lba28(&pack) != 512)
+        {
+            terminal_printf("[ERROR]clear_partition\n");
+            return -1;
+        }
+    }
+    return 0;
+}
+
 
 int write_mbr()
 {
@@ -603,15 +609,68 @@ int read_file(file_descriptor* fd, uint8_t* buff, uint32_t size)
     return sum;
 }
 
-int file_open(uint8_t* name, uint8_t mode)
+int parse_dir_entry(char* buff, directory_entry* dir)
 {
-    
+    dir->inode_num = *((uint32_t*)buff);
+    dir->entry_size = *(uint16_t*)(buff + 4);
+    dir->name_lenght = *(uint16_t*)(buff + 6);
+    dir->type = *(buff + 7);
+    dir->name = buff + 8;
 }
 
-
-void create_ext2()
+file_descriptor file_open(char* path, uint8_t mode)
 {
-    read_mbr();
+    char block_buff[BLOCK_SIZE];
+    char* buff = block_buff;
+    char* token = strtok(path, '/');
+
+    file_descriptor fd; 
+    fd.file_pointer = 0;
+    fd.inode_num = ROOT_INODE;
+    read_inode(ROOT_INODE, &(fd.in));
+    
+    read_file(&fd, block_buff, BLOCK_SIZE);
+
+    directory_entry dir;
+    parse_dir_entry(buff, &dir);
+    
+    
+    while(token)
+    {
+        if(strncmp(token, dir.name, dir.name_lenght) == 0)
+        {
+            if(dir.type != EXT2_TYPE_DIR) break;
+            fd.file_pointer = 0;
+            fd.inode_num = dir.inode_num;
+            read_inode(dir.inode_num, &(fd.in));
+            read_file(&fd, block_buff, BLOCK_SIZE);
+            token = strtok(NULL, "/");                
+        }
+        buff += dir.entry_size;
+        parse_dir_entry(buff, &dir);
+    }
+
+    file_descriptor fd;
+    fd.file_pointer = 0;
+    read_inode(dir.inode_num, &dir.inode_num);
+    fd.inode_num = dir.inode_num;
+    return fd;
+}
+
+void create_ext2(uint8_t part_id)
+{
+    clear_partition(part_id);
+    super_block sp;
+    sp.free_block_count = (mbr_table[part_id].sector_num << 9) / BLOCK_SIZE;
+    sp.block_size = BLOCK_SIZE >> 10;
+    sp.block_group_size = BLOCK_SIZE * 8;
+    sp.block_group_inode_count = BLOCK_SIZE * 8;
+    sp.total_block_count = sp.free_block_count;
+    sp.total_inode_count = sp.total_block_count / (4 * BLOCK_SIZE);
+    sp.signature = EXT2_SIGNATURE;
+    sp.major_version = 0;
+    sp.minor_version = 0;
+    
 }
 
 
