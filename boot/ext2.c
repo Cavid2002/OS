@@ -858,8 +858,9 @@ int file_create(char* path)
             terminal_printf("[ERROR]Dir not found!\n");
             return -1;
         }
-
     }
+
+    
     
 
 }
