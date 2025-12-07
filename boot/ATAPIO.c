@@ -275,6 +275,7 @@ int atapio_init()
         terminal_printf("[ERROR] ATA BUS NOT FOUND");
         return -1;
     }
+    
     disk_packet_lba28 pack;
     pack.buff = cur_identify_buff;
     pack.sector_count = 0;
