@@ -12,7 +12,15 @@ static uint16_t block_size;
 static ext2_fs_data fs_data;
 static block_group_descriptor bg_table[10000];
 
-
+int print_super_block()
+{
+    terminal_printf("[SUPER BLOCK DATA]\n");
+    terminal_printf("Inode count: %d\n", s_block.total_inode_count);
+    terminal_printf("Block count: %d\n", s_block.total_block_count);
+    terminal_printf("Block size: %d\n", s_block.block_size);
+    terminal_printf("Block group size: %d\n", s_block.block_group_size);
+    terminal_printf("Block group inode: %d\n", s_block.block_group_inode_count);
+}
 
 int read_mbr()
 {
@@ -26,8 +34,8 @@ int read_mbr()
         terminal_printf("MBR READ ERROR!\n");
         return -1;     
     }
-
-    mbr_table = (mbr_partition_table_entry*)(mbr_buff + 0x1FE);
+    terminal_printf("MBR READ SUCCESS!\n");
+    mbr_table = (mbr_partition_table_entry*)(mbr_buff + 0x1BE);
     return 0;
 }
 
@@ -106,6 +114,7 @@ int read_superblock(uint8_t part_id)
     fs_data.single_indirect_block_size = fs_data.block_size / 4;
     fs_data.double_indirect_block_size = fs_data.single_indirect_block_size * (fs_data.block_size / 4);
     fs_data.triple_indirect_block_size = fs_data.double_indirect_block_size * (fs_data.block_size / 4);
+    print_super_block();
     return 0;
 }
 
@@ -217,16 +226,37 @@ int allocate_block(uint32_t inode_num)
         terminal_printf("[ERROR]allocated_free_block\n");
         return -1;
     }
+
     return block_num + block_group_idx * s_block.block_group_size;
+}
+
+int allocate_inode(uint32_t inode_num)
+{
+    disk_packet_lba28 pack;
+    uint32_t block_buff[BLOCK_SIZE / 4];
+    uint32_t block_group_idx = (inode_num - 1) / s_block.block_group_inode_count;
+    
+    while(bg_table[block_group_idx].free_inode_count != 0)
+    {
+        block_group_idx++;
+    }
+
+    block_group_descriptor* bgd = bg_table + block_group_idx;
+    pack.buff = block_buff;
+    pack.lba = block_to_lba(bgd->block_bitmap_addr, fs_data.block_size);
+    pack.sector_count = fs_data.block_n_sectors;
+
+    
+    
 }
 
 
 int read_direct_block(file_descriptor* fd, 
     uint32_t block_num, 
-    uint8_t* buff, 
+    char* buff, 
     uint32_t size)
 {
-    uint8_t block_buff[BLOCK_SIZE];
+    char block_buff[BLOCK_SIZE];
     uint32_t internal_offset = fd->file_pointer % fs_data.block_size;
     uint32_t transfer_size = fs_data.block_size - internal_offset;
 
@@ -248,9 +278,9 @@ int read_direct_block(file_descriptor* fd,
 }
 
 int write_direct_block(file_descriptor* fd, uint32_t block_num, 
-    uint8_t* buff, uint32_t size)
+    char* buff, uint32_t size)
 {
-    uint8_t block_buff[BLOCK_SIZE];
+    char block_buff[BLOCK_SIZE];
     memset(buff, 0, fs_data.block_size);
     uint32_t offset = fd->file_pointer % fs_data.block_size;
     uint32_t transfer_size = fs_data.block_size - offset;
@@ -288,12 +318,12 @@ int write_single_indirect_block(
     file_descriptor* fd,
     uint32_t block_num,
     uint32_t block_offset,
-    uint8_t buff,
+    char* buff,
     uint32_t size
 )
 {
     uint32_t block_buff[BLOCK_SIZE / 4];
-    memset(block_buff, 0, fs_data.block_size);
+    memset((char*)block_buff, 0, fs_data.block_size);
 
     uint32_t ret = 0, sum = 0;
     disk_packet_lba28 pack;
@@ -328,7 +358,7 @@ int read_single_indirect_block(
     file_descriptor* fd, 
     uint32_t block_num,
     uint32_t block_offset, 
-    uint8_t* buff, 
+    char* buff, 
     uint32_t size)
 {
     uint32_t block_buff[BLOCK_SIZE / 4];
@@ -361,10 +391,10 @@ int read_single_indirect_block(
 int write_double_indirect_block(file_descriptor* fd,
     uint32_t double_block,
     uint32_t block_offset,
-    uint8_t buff, uint32_t size)
+    char* buff, uint32_t size)
 {
     uint32_t block_buff[BLOCK_SIZE / 4];
-    memset(block_buff, 0, BLOCK_SIZE);
+    memset((char*)block_buff, 0, BLOCK_SIZE);
 
     uint32_t ret = 0, sum = 0;
     uint32_t start = block_offset / fs_data.single_indirect_block_size;
@@ -440,12 +470,12 @@ int write_triple_indirect_block(
     file_descriptor* fd,
     uint32_t triple_block,
     uint32_t block_offset,
-    uint8_t* buff,
+    char* buff,
     uint32_t size
 )
 {
     uint32_t block_buff[BLOCK_SIZE / 4];
-    memset(block_buff, 0, BLOCK_SIZE);
+    memset((char*)block_buff, 0, BLOCK_SIZE);
 
     uint32_t ret = 0, sum = 0;
     uint32_t start = block_offset / fs_data.double_indirect_block_size;
@@ -481,7 +511,7 @@ int write_triple_indirect_block(
 int read_triple_indirect_block(file_descriptor* fd, 
     uint32_t triple_block,
     uint32_t block_offset, 
-    uint8_t* buff, uint32_t size)
+    char* buff, uint32_t size)
 {
     uint32_t block_buff[BLOCK_SIZE / 4];
     uint32_t sum = 0, ret = 0;
@@ -515,7 +545,7 @@ int read_triple_indirect_block(file_descriptor* fd,
 }
 
 
-int write_file(file_descriptor* fd, uint8_t buff, uint32_t size)
+int write_file(file_descriptor* fd, char* buff, uint32_t size)
 {
     uint32_t block_offset = fd->file_pointer / fs_data.block_size;
     uint32_t ret = 0, sum = 0;
@@ -554,10 +584,15 @@ int write_file(file_descriptor* fd, uint8_t buff, uint32_t size)
 }
 
 
-int read_file(file_descriptor* fd, uint8_t* buff, uint32_t size)
+int read_file(file_descriptor* fd, char* buff, uint32_t size)
 {
     uint32_t block_offset = fd->file_pointer / fs_data.block_size;
     uint32_t ret = 0, sum = 0;
+    if(fd->file_pointer >= fd->in.size)
+    {
+        return EOF;
+    }
+
     if(fd->file_pointer + size >= fd->in.size)
     {
         size = fd->in.size - fd->file_pointer;
@@ -609,69 +644,256 @@ int read_file(file_descriptor* fd, uint8_t* buff, uint32_t size)
     return sum;
 }
 
-int parse_dir_entry(char* buff, directory_entry* dir)
+int parse_dir_entry(directory_entry* dir, char* buff, uint32_t size)
 {
+    if(size > sizeof(directory_entry)) return -1;
     dir->inode_num = *((uint32_t*)buff);
     dir->entry_size = *(uint16_t*)(buff + 4);
-    dir->name_lenght = *(uint16_t*)(buff + 6);
+    dir->name_lenght = *(uint8_t*)(buff + 6);
     dir->type = *(buff + 7);
     dir->name = buff + 8;
+    return 0;
 }
 
 file_descriptor file_open(char* path, uint8_t mode)
 {
-    char block_buff[BLOCK_SIZE];
-    char* buff = block_buff;
-    char* token = strtok(path, '/');
+    file_descriptor fd;
 
-    file_descriptor fd; 
     fd.file_pointer = 0;
     fd.inode_num = ROOT_INODE;
-    read_inode(ROOT_INODE, &(fd.in));
-    
-    read_file(&fd, block_buff, BLOCK_SIZE);
+    read_inode(ROOT_INODE, &fd.in);
+    if (!path || path[0] == '\0' || strncmp(path, "/", 1) == 0) return fd;
 
-    directory_entry dir;
-    parse_dir_entry(buff, &dir);
-    
-    
-    while(token)
+    char* token = strtok(path, "/");
+    if (!token) return fd;
+
+    char block_buff[BLOCK_SIZE];
+
+    while (token)
     {
-        if(strncmp(token, dir.name, dir.name_lenght) == 0)
+        int found = 0;
+        int size = read_file(&fd, block_buff, BLOCK_SIZE);
+        if (size <= 0) break;
+
+        char* ptr = block_buff;
+        int remaining = size;
+
+        directory_entry dir;
+
+        while (parse_dir_entry(&dir, ptr, remaining) > 0)
         {
-            if(dir.type != EXT2_TYPE_DIR) break;
-            fd.file_pointer = 0;
-            fd.inode_num = dir.inode_num;
-            read_inode(dir.inode_num, &(fd.in));
-            read_file(&fd, block_buff, BLOCK_SIZE);
-            token = strtok(NULL, "/");                
+            if (strncmp(token, dir.name, dir.name_lenght) == 0)
+            {
+                read_inode(dir.inode_num, &fd.in);
+                fd.inode_num = dir.inode_num;
+                fd.file_pointer = 0;
+                found = 1;
+                break;
+            }
+
+            ptr += dir.entry_size;
+            remaining -= dir.entry_size;
         }
-        buff += dir.entry_size;
-        parse_dir_entry(buff, &dir);
+
+        if (!found)
+        {
+            terminal_printf("file_open: \"%s\" not found\n", token);
+            fd.inode_num = 0;
+            return fd;
+        }
+
+        token = strtok(NULL, "/");
     }
 
-    file_descriptor fd;
-    fd.file_pointer = 0;
-    read_inode(dir.inode_num, &dir.inode_num);
-    fd.inode_num = dir.inode_num;
     return fd;
 }
 
-void create_ext2(uint8_t part_id)
+
+int file_tell(file_descriptor* fd)
 {
-    clear_partition(part_id);
-    super_block sp;
-    sp.free_block_count = (mbr_table[part_id].sector_num << 9) / BLOCK_SIZE;
-    sp.block_size = BLOCK_SIZE >> 10;
-    sp.block_group_size = BLOCK_SIZE * 8;
-    sp.block_group_inode_count = BLOCK_SIZE * 8;
-    sp.total_block_count = sp.free_block_count;
-    sp.total_inode_count = sp.total_block_count / (4 * BLOCK_SIZE);
-    sp.signature = EXT2_SIGNATURE;
-    sp.major_version = 0;
-    sp.minor_version = 0;
-    
+    return fd->file_pointer;
 }
+
+int file_seek(file_descriptor* fd, uint32_t offset, uint32_t origin)
+{
+    if(origin == SEEK_CUR) fd->file_pointer += offset;
+    else if(origin == SEEK_END) fd->file_pointer = fd->in.size + origin;
+    else if(origin == SEEK_SET) fd->file_pointer = origin;
+    else return -1;
+    return 0;
+}
+
+int lsdir(char* path)
+{
+    directory_entry dir;
+    char block_buff[BLOCK_SIZE];
+    char* buff;
+    uint32_t size;
+    file_descriptor fd;
+
+    fd.file_pointer = 0;
+    fd.inode_num = ROOT_INODE;
+    if (read_inode(ROOT_INODE, &fd.in) < 0)
+    {
+        terminal_printf("[ERROR] lsdir: cannot read root inode\n");
+        return -1;
+    }
+
+    if (read_file(&fd, block_buff, BLOCK_SIZE) < 0)
+    {
+        terminal_printf("[ERROR] lsdir: cannot read root data\n");
+        return -1;
+    }
+
+    char* token = strtok(path, "/");
+
+    while (token)
+    {
+        buff = block_buff;
+        size = BLOCK_SIZE;
+
+        int found = 0;
+
+        while (parse_dir_entry(&dir, buff, size) >= 0)
+        {
+            if (parse_dir_entry(&dir, buff, size) < 0)
+                break;
+
+            if (strncmp(dir.name, token, dir.name_lenght) == 0)
+            {
+                found = 1;
+                fd.file_pointer = 0;
+                fd.inode_num = dir.inode_num;
+
+                if (read_inode(dir.inode_num, &fd.in) < 0)
+                    return -1;
+
+                if (read_file(&fd, block_buff, BLOCK_SIZE) < 0)
+                    return -1;
+
+                break;
+            }
+
+            buff += dir.entry_size;
+            size -= dir.entry_size;
+        }
+
+        if (!found)
+        {
+            terminal_printf("Path not found: %s\n", token);
+            return -1;
+        }
+
+        token = strtok(NULL, "/");
+    }
+
+    buff = block_buff;
+    size = BLOCK_SIZE;
+
+    while (1)
+    {
+        if (parse_dir_entry(&dir, buff, size) < 0)
+            break;
+
+        if (dir.inode_num != 0)
+        {
+            terminal_write(dir.name, dir.name_lenght);
+            terminal_printf("\n");
+        }
+
+        buff += dir.entry_size;
+        size -= dir.entry_size;
+    }
+
+    return 0;
+}
+
+int file_create(char* path)
+{
+    char block_buff[BLOCK_SIZE];
+    char* ptr = block_buff;
+    int size = BLOCK_SIZE;
+    char* filename;
+    char* token = strtok(path, "/");
+
+    file_descriptor fd;
+    directory_entry dir;
+    
+    fd.file_pointer = 0;
+    fd.inode_num = ROOT_INODE;
+    read_inode(ROOT_INODE, &fd.in);
+
+    read_file(&fd, ptr, size);
+
+    int found = 0;
+    while(token)
+    {
+        filename = token;
+        ptr = block_buff;
+        size = BLOCK_SIZE;
+
+        while(1)
+        {
+            if (parse_dir_entry(&dir, ptr, size) < 0)
+                break;
+
+            if(strncmp(dir.name, token, dir.name_lenght) == 0)
+            {
+                read_inode(dir.inode_num, &fd.in);
+                fd.inode_num = dir.inode_num;
+                fd.file_pointer = 0;
+                read_file(&fd, block_buff, BLOCK_SIZE);
+                found = 1;
+                break;
+            }
+
+            ptr += dir.entry_size;
+            size -= dir.entry_size;
+
+        }
+
+        token = strtok(NULL, "/");
+        if(token && !found)
+        {
+            terminal_printf("[ERROR]Dir not found!\n");
+            return -1;
+        }
+
+    }
+    
+
+}
+
+int create_ext2(uint8_t part_id)
+{
+    disk_packet_lba28 pack;
+    read_mbr();
+    // clear_partition(part_id);
+    super_block sb;
+    sb.free_block_count = (mbr_table[part_id].sector_num << 9) / BLOCK_SIZE;
+    sb.block_size = BLOCK_SIZE >> 10;
+    sb.block_group_size = BLOCK_SIZE * 8;
+    sb.block_group_inode_count = BLOCK_SIZE * 8;
+    sb.total_block_count = sb.free_block_count;
+    sb.total_inode_count = sb.total_block_count / 4;
+    sb.signature = EXT2_SIGNATURE;
+    sb.major_version = 0;
+    sb.minor_version = 0;
+    
+    pack.lba = mbr_table[part_id].lba_start + OFFSET_SUPERBLOCK;
+    pack.buff = &sb;
+    pack.sector_count = 2;
+    if(atapio_write_lba28(&pack) != pack.sector_count << 9)
+    {
+        terminal_printf("[ERROR]create_ext2\n");
+        return -1;
+    }
+
+    terminal_printf("EXT2 WRITE SUCCESS!\n");
+    return 0;
+}
+
+
 
 
 

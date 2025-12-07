@@ -91,10 +91,20 @@ PT1:
     db 0x00
     db 0x00
     dd 0x01     ;PT1_LBA
-    dd 0x10000  ;PT1_SECTOR_NUM
+    dd 0xFF     ;PT1_SECTOR_NUM
 PT1_end:
-
-times 48 db 0x00
+PT2:
+    db 0x00     ;PT2_ATTRIB
+    db 0x00     ;PT2_START_CHS
+    db 0x00
+    db 0x00
+    db 0x83     ;PT2_TYPE
+    db 0x00     ;PT2_STOP_CHS
+    db 0x00
+    db 0x00     
+    dd 0x100     ;PT2_LBA
+    dd 10000000  ;PT2_SECTOR_NUM
+times 32 db 0x00
 
 dw 0xAA55   
 

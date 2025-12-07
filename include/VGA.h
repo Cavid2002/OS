@@ -4,7 +4,6 @@
 #include <stdint.h>
 
 uint16_t entry(uint8_t color, uint8_t c);
-uint32_t strlen(const char* str);
 
 void putchar(uint8_t c);
 void terminal_init();

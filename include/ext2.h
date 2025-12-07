@@ -19,6 +19,11 @@
 #define EXT2_TYPE_SYMLINK   0xA000
 #define EXT2_TYPE_UNIX_SOCK 0xC000
 
+#define EOF -1
+#define SEEK_CUR    0 
+#define SEEK_SET    1
+#define SEEK_END    2
+
 #define EXT2_SIGNATURE 0xEF53
 
 #define ROOT_INODE 2
@@ -83,9 +88,9 @@ typedef struct
     uint32_t single_direct;
     uint32_t double_indirect;
     uint32_t triple_indirect;
-    uint32_t reserved[2];
+    uint32_t reserved_low[2];
     uint32_t frag_addr;
-    uint32_t reserved[3];
+    uint32_t reserved_high[3];
 } __attribute__((packed)) inode;
 
 typedef struct 
@@ -117,5 +122,9 @@ typedef struct
     uint32_t file_pointer;
     uint32_t inode_num;
 } file_descriptor;
+
+int create_ext2(uint8_t part_id);
+int read_mbr();
+int read_superblock(uint8_t part_id);
 
 #endif

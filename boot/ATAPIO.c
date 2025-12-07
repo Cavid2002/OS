@@ -178,43 +178,65 @@ uint8_t atapio_get_status()
 
 int atapio_read_lba28(disk_packet_lba28* pack)
 {
+    if(atapio_wait(ATAPIO_STATUS_RDY, 1000) < 0)
+    {
+        terminal_printf("ATAPIO WRITE Error!");
+        return -1;
+    }
     uint16_t ret = 0;
     uint32_t lba = pack->lba;
-    uint16_t* buff = pack->buff;
+    uint16_t* buff = (uint16_t*)pack->buff;
+    uint8_t sector_count = pack->sector_count;
     uint16_t port = ata_bus[cur_bus].io_base;
-    uint8_t val = 0b11100000 | (cur_drive << 4);
-    
+    uint8_t val = in_byte(port + ATAPIO_REG_SELECT);
     
     out_byte(port + ATAPIO_REG_SEC_COUNT, pack->sector_count);
     out_byte(port + ATAPIO_REG_LBA_LOW, lba & 0x000000FF);
     out_byte(port + ATAPIO_REG_LBA_MID, (lba & 0x0000FF00) >> 8);
     out_byte(port + ATAPIO_REG_LBA_HIGH, (lba & 0x00FF0000) >> 16);
-    out_byte(port + ATAPIO_REG_SELECT, val | (lba & 0x0F000000) >> 24);
+    out_byte(port + ATAPIO_REG_SELECT, val | ((lba & 0x0F000000) >> 24));
     out_byte(port + ATAPIO_REG_CMD, 0x20);
 
     if(atapio_wait(ATAPIO_STATUS_DRQ, 1000) < 0)
     {
-        terminal_printf("ATAPIO Read Error!");
+        terminal_printf("ATAPIO WRITE Error!");
         return -1;
     }
 
-    for(int i = 0; atapio_get_status() & ATAPIO_STATUS_DRQ; i++)
+    for(int s = 0; s < sector_count; s++)
     {
-        buff[i] = in_word(port + ATAPIO_REG_DATA);
-        ret++;
+        for(int i = 0; i < 256; i++)
+        {
+            buff[(s << 8) + i] = in_word(port + ATAPIO_REG_DATA);
+            ret++;
+        }
+
+        if(s != sector_count - 1 && atapio_wait(ATAPIO_STATUS_DRQ, 1000) < 0)
+        {
+            terminal_printf("ATAPIO WRITE Error!\n");
+            return -1;            
+        }
     }
+
     return ret * 2;
 }
 
 
 int atapio_write_lba28(disk_packet_lba28* pack)
 {
+    if(atapio_wait(ATAPIO_STATUS_RDY, 1000) < 0)
+    {
+        terminal_printf("ATAPIO WRITE Error!");
+        return -1;
+    }
+    
     uint16_t ret = 0;
     uint32_t lba = pack->lba;
     uint16_t* buff = (uint16_t*)pack->buff;
+    uint8_t sector_count = pack->sector_count;
     uint16_t port = ata_bus[cur_bus].io_base;
     uint8_t val = in_byte(port + ATAPIO_REG_SELECT);
-    
+
     out_byte(port + ATAPIO_REG_SEC_COUNT, pack->sector_count);
     out_byte(port + ATAPIO_REG_LBA_LOW, lba & 0x000000FF);
     out_byte(port + ATAPIO_REG_LBA_MID, (lba & 0x0000FF00) >> 8);
@@ -224,14 +246,23 @@ int atapio_write_lba28(disk_packet_lba28* pack)
 
     if(atapio_wait(ATAPIO_STATUS_DRQ, 1000) < 0)
     {
-        terminal_printf("ATAPIO Read Error!");
+        terminal_printf("ATAPIO WRITE Error!");
         return -1;
     }
 
-    for(int i = 0; atapio_get_status() & ATAPIO_STATUS_DRQ; i++)
+    for(int s = 0; s < sector_count; s++)
     {
-        out_word(port + ATAPIO_REG_DATA, buff[i]);
-        ret++;
+        for(int i = 0; i < 256; i++)
+        {
+            out_word(port + ATAPIO_REG_DATA, buff[(s << 8) + i]);
+            ret++;
+        }
+
+        if(s != sector_count - 1 && atapio_wait(ATAPIO_STATUS_DRQ, 1000) < 0)
+        {
+            terminal_printf("ATAPIO WRITE Error!\n");
+            return -1;            
+        }
     }
 
     return ret * 2;
@@ -262,27 +293,7 @@ int atapio_init()
 
 }
 
-void disk_cmd_enque(disk_cmd_entry* cmd)
-{
-    cmd_queue[cmd_queue_head % ATAPIO_CMD_QUEUE_SIZE] = *cmd;
-    cmd_queue_tail++;
 
-    // TODO
-}
-
-void disk_cmd_deque()
-{
-    uint8_t cur_head = cmd_queue_head % ATAPIO_CMD_QUEUE_SIZE;
-    uint8_t cur_tail = cmd_queue_tail % ATAPIO_CMD_QUEUE_SIZE;
-
-    if(cur_head == cur_tail)
-    {
-        return -1;
-    }
-
-    // TODO
-
-}
 
 int disk_select(uint8_t id)
 {

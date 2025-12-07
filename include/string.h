@@ -10,6 +10,7 @@ void memset(char* buff, char val, uint32_t size);
 uint32_t strlen(const char* str);
 char* strtok(char *s, const char *delim);
 int strncmp(char* str1, char* str2, uint32_t size);
+uint32_t strlen(const char* str);
 
 
 #endif

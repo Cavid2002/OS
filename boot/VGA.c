@@ -1,5 +1,6 @@
 #include "../include/VGA.h"
 #include "../include/printf.h"
+#include "../include/string.h"
 
 static uint16_t* addr = (uint16_t*)0xb8000;
 static const uint16_t WIDTH = 80;
@@ -10,16 +11,6 @@ static uint16_t POS_Y;
 uint16_t entry(uint8_t color, uint8_t c)
 {
     return (uint16_t)c | (uint16_t)(color << 8); 
-}
-
-uint32_t strlen(const char* str)
-{
-    int len = 0;
-    while(str[len])
-    {
-        len++;
-    }
-    return len;
 }
 
 void terminal_clean()
