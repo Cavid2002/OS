@@ -37,6 +37,13 @@ int read_mbr()
     }
     terminal_printf("MBR READ SUCCESS!\n");
     mbr_table = (mbr_partition_table_entry*)(mbr_buff + 0x1BE);
+    for(int i = 0; i < 4; i++)
+    {
+        terminal_printf("PARTITION %d\n", i);
+        terminal_printf("LBA: %d\n", mbr_table[i].lba_start);
+        terminal_printf("Sector count: %d\n", mbr_table[i].sector_num);
+        
+    }
     return 0;
 }
 
@@ -1030,48 +1037,48 @@ int create_ext2(uint8_t part_id)
     sb.major_version = 0;
     sb.minor_version = 0;
     
-    // uint32_t bgdt_size = sb.total_block_count / sb.block_group_inode_count; 
+    uint32_t bgdt_size = sb.total_block_count / sb.block_group_inode_count; 
 
-    // for(int i = 0; i < bgdt_size; i++)
-    // {
-    //     bg_table[i].block_bitmap_addr = i * sb.block_group_size + 2;
-    //     bg_table[i].inode_bitmap_addr = i * sb.block_group_size + 3;
-    //     bg_table[i].inode_table_addr = i * sb.block_group_size + 4;
-    //     bg_table[i].free_inode_count = (BLOCK_SIZE * 8) / 4;
-    //     bg_table[i].free_block_count = (BLOCK_SIZE * 8) - USED_BLOCK_COUNT;
-    //     bg_table[i].dir_count = 0;
+    for(int i = 0; i < bgdt_size; i++)
+    {
+        bg_table[i].block_bitmap_addr = i * sb.block_group_size + 2;
+        bg_table[i].inode_bitmap_addr = i * sb.block_group_size + 3;
+        bg_table[i].inode_table_addr = i * sb.block_group_size + 4;
+        bg_table[i].free_inode_count = (BLOCK_SIZE * 8) / 4;
+        bg_table[i].free_block_count = (BLOCK_SIZE * 8) - USED_BLOCK_COUNT;
+        bg_table[i].dir_count = 0;
 
-    //     pack.buff = block_buff;
-    //     pack.lba = block_to_lba(bg_table[i].inode_bitmap_addr, BLOCK_SIZE);
-    //     pack.sector_count = 8;
-    //     if(atapio_write_lba28(&pack) != pack.sector_count << 9)
-    //     {
-    //         terminal_printf("[ERROR]create_ext2\n");
-    //         return -1;
-    //     } 
+        pack.buff = block_buff;
+        pack.lba = block_to_lba(bg_table[i].inode_bitmap_addr, BLOCK_SIZE);
+        pack.sector_count = 8;
+        if(atapio_write_lba28(&pack) != pack.sector_count << 9)
+        {
+            terminal_printf("[ERROR]create_ext2\n");
+            return -1;
+        } 
 
-    //     pack.lba = block_to_lba(bg_table[i].block_bitmap_addr, BLOCK_SIZE);
-    //     if(atapio_write_lba28(&pack) != pack.sector_count << 9)
-    //     {
-    //         terminal_printf("[ERROR]create_ext2\n");
-    //         return -1;
-    //     } 
+        pack.lba = block_to_lba(bg_table[i].block_bitmap_addr, BLOCK_SIZE);
+        if(atapio_write_lba28(&pack) != pack.sector_count << 9)
+        {
+            terminal_printf("[ERROR]create_ext2\n");
+            return -1;
+        } 
 
-    // }
+    }
 
-    // bg_table[0].free_block_count -= 10;
-    // bg_table[0].free_inode_count -= 10;
+    bg_table[0].free_block_count -= 10;
+    bg_table[0].free_inode_count -= 10;
     
-    // memncpy(block_buff, (char*)bg_table, sizeof(block_group_descriptor) * bgdt_size);
-    // pack.buff = block_buff;
-    // pack.lba = mbr_table[part_id].lba_start + 2;
-    // pack.sector_count = (sizeof(block_group_descriptor) * bgdt_size) / SECTOR_SIZE;
+    memncpy(block_buff, (char*)bg_table, sizeof(block_group_descriptor) * bgdt_size);
+    pack.buff = block_buff;
+    pack.lba = mbr_table[part_id].lba_start + 2;
+    pack.sector_count = (sizeof(block_group_descriptor) * bgdt_size) / SECTOR_SIZE;
 
-    // if(atapio_write_lba28(&pack) != pack.sector_count << 9)
-    // {
-    //     terminal_printf("[ERROR]create_ext2\n");
-    //     return -1;
-    // }
+    if(atapio_write_lba28(&pack) != pack.sector_count << 9)
+    {
+        terminal_printf("[ERROR]create_ext2\n");
+        return -1;
+    }
 
 
     pack.lba = mbr_table[part_id].lba_start;

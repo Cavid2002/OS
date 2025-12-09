@@ -9,6 +9,9 @@ static uint8_t cur_bus;
 static uint8_t cur_drive;
 static uint16_t cur_identify_buff[256];
 
+static disk_cmd_entry cmd_queue[20];
+static uint8_t cmd_queue_tail = 0;
+static uint8_t cmd_queue_head = 0; 
 
 
 uint16_t get_identify_data(uint8_t index)
@@ -114,11 +117,7 @@ int atapio_flush_cache()
 {
     uint16_t port = ata_bus[cur_bus].io_base + ATAPIO_REG_CMD;
     out_byte(port, 0xE7);
-    if(atapio_wait(ATAPIO_STATUS_BSY, 1000) < 0)
-    {
-        terminal_printf("flush cache error\n");
-        return -1;
-    }
+    atapio_wait(ATAPIO_STATUS_BSY, 100);
     return 0;
 }
 
@@ -136,11 +135,6 @@ void atapio_software_reset(uint8_t bus_num)
 
 int atapio_identify(disk_packet_lba28* pack)
 {
-    if (atapio_wait(ATAPIO_STATUS_RDY, 1000) < 0)
-    {
-        terminal_printf("[ERROR] ATAPIO WRITE ERROR: drive not ready\n");
-        return -1;
-    }
     terminal_printf("ATAPIO IDENTIFY START...\n");
     uint8_t cmd = 0xEC;
     if(ata_bus[cur_bus].dev_type & ATAPIO_DEV_TYPE_ATAPI << (4 * cur_drive))
@@ -190,7 +184,7 @@ int atapio_read_lba28(disk_packet_lba28* pack)
         return -1;
     }
         
-    int res = 0;
+
     uint32_t lba = pack->lba;
     uint16_t* buff = (uint16_t*)pack->buff;
     uint8_t sector_count = pack->sector_count;
@@ -214,10 +208,7 @@ int atapio_read_lba28(disk_packet_lba28* pack)
     for (int s = 0; s < sector_count; s++)
     {
         for (int i = 0; i < 256; i++)
-        {
             buff[s * 256 + i] = in_word(port + ATAPIO_REG_DATA);
-            res++;
-        }
 
         if (s != sector_count - 1 && atapio_wait(ATAPIO_STATUS_DRQ, 1000) < 0)
         {
@@ -227,7 +218,7 @@ int atapio_read_lba28(disk_packet_lba28* pack)
                 
     }
 
-    return res * 2;  
+    return sector_count * 512;  
 }
 
 
@@ -243,7 +234,7 @@ int atapio_write_lba28(disk_packet_lba28* pack)
     uint32_t lba = pack->lba;
     uint16_t* buff = (uint16_t*)pack->buff;
     uint8_t sector_count = pack->sector_count;
-    int res = 0;
+
     uint16_t port = ata_bus[cur_bus].io_base;
 
     uint8_t head = 0xE0 | ((lba >> 24) & 0x0F);
@@ -264,29 +255,17 @@ int atapio_write_lba28(disk_packet_lba28* pack)
     for (int s = 0; s < sector_count; s++)
     {
         for (int i = 0; i < 256; i++)
-        {
             out_word(port + ATAPIO_REG_DATA, buff[s * 256 + i]);
-            res++;
-        }
 
         if (s != sector_count - 1)
-        {
             if (atapio_wait(ATAPIO_STATUS_DRQ, 1000) < 0)
             {
-                terminal_printf("[ERROR] ATAPIO WRITE ERROR: DRQ timeout\n");
+                terminal_printf("[ERROR] ATAPIO WRITE ERROR: DRQ timeout mid-write\n");
                 return -1;
             }
-        }
     }
 
-    if (atapio_wait(ATAPIO_STATUS_RDY, 1000) < 0)
-    {
-        terminal_printf("[ERROR] ATAPIO WRITE NOT COMPLETE\n");
-        return -1;
-    }
-
-    atapio_flush_cache();
-    return res * 2;
+    return sector_count * 512;
 }
 
 
@@ -304,26 +283,18 @@ int atapio_init()
     pack.lba = 0;
     
     atapio_setup_address();
+    // for(int i = 0; i < 2; i++)
+    // {
+    //     for(int j = 0; j < 2; j++)
+    //     {
+    //         atapio_select(i, j);
+    //         atapio_bus_set();
+    //         atapio_identify(&pack);
+    //     }
+    // }
     atapio_select(0, 0);
     atapio_bus_set();
-    atapio_flush_cache();
     atapio_identify(&pack);
 
 }
 
-
-
-int disk_select(uint8_t id)
-{
-    disk_packet_lba28 pack;
-    pack.buff = cur_identify_buff;
-    pack.sector_count = 0;
-    pack.lba = 0;
-    atapio_select(id / 2, id % 2);
-    if(atapio_identify(&pack) != 256)
-    {
-        return -1;
-    }
-
-    return 0;
-}

@@ -31,7 +31,6 @@ void boot_main()
     }
 
     terminal_clean();
-    atapio_init();
 
     if(atapio_write_lba28(&pack) != 512)
     {
@@ -43,10 +42,10 @@ void boot_main()
     atapio_read_lba28(&pack);
 
     terminal_write(temp, 15);
-
-    // create_ext2(1);
-    // read_superblock(1);
-    // // read_block_group_descriptor(1);
+    terminal_clean();
+    create_ext2(1);
+    read_superblock(1);
+    read_block_group_descriptor(1);
     // terminal_clean();
     // file_create("/test");
     // lsdir("/");
