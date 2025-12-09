@@ -24,10 +24,11 @@ void boot_main()
     }
 
     terminal_clean();
-    atapio_select(0, 0);
+    atapio_init();
+    read_mbr();
     create_ext2(1);
     read_superblock(1);
-    
+    read_block_group_descriptor(1);
     while(1)
     {
         

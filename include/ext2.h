@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 
+
+#define USED_BLOCK_COUNT                258
+#define USED_INODE_COUNT                10
 #define INODE_SIZE                      128
 #define OFFSET_SUPERBLOCK               2
 #define OFFSET_BG_DESC                  4
@@ -99,7 +102,7 @@ typedef struct
     uint16_t entry_size;
     uint8_t name_lenght;
     uint8_t type;
-    uint8_t* name;
+    char name[255];
 } __attribute__((packed)) directory_entry;
 
 
@@ -126,5 +129,9 @@ typedef struct
 int create_ext2(uint8_t part_id);
 int read_mbr();
 int read_superblock(uint8_t part_id);
+int read_block_group_descriptor(uint8_t part_id);
+int create_file(char* path);
+file_descriptor file_open(char* path, uint8_t mode);
+
 
 #endif

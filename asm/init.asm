@@ -138,9 +138,9 @@ disk_num: dw 0x00
 packet_addr_structure:
     db 0x10        ; packet size (16 bytes)
     db 0x00           ; reserved
-    dw 0x0030        ; number of sectors to read (0xF)
-    dw 0x7E00      ; offset of buffer
-    dw 0x0000         ; segment of buffer
+    dw 0x0032      ; number of sectors to read (0xF)
+    dw 0x0000      ; offset of buffer
+    dw 0x07E0         ; segment of buffer
     dd 0x2         ; starting LBA (sector 2)
     dd 0x0
     
