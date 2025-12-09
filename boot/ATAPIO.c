@@ -258,7 +258,7 @@ int atapio_write_lba28(disk_packet_lba28* pack)
             out_word(port + ATAPIO_REG_DATA, buff[s * 256 + i]);
 
         if (s != sector_count - 1)
-            if (atapio_wait(ATAPIO_STATUS_DRQ, 1000) < 0)
+            if (atapio_wait(ATAPIO_STATUS_DRQ, 10000) < 0)
             {
                 terminal_printf("[ERROR] ATAPIO WRITE ERROR: DRQ timeout mid-write\n");
                 return -1;
@@ -283,15 +283,6 @@ int atapio_init()
     pack.lba = 0;
     
     atapio_setup_address();
-    // for(int i = 0; i < 2; i++)
-    // {
-    //     for(int j = 0; j < 2; j++)
-    //     {
-    //         atapio_select(i, j);
-    //         atapio_bus_set();
-    //         atapio_identify(&pack);
-    //     }
-    // }
     atapio_select(0, 0);
     atapio_bus_set();
     atapio_identify(&pack);

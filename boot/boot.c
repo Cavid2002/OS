@@ -6,6 +6,7 @@
 #include "../include/ATAPIO.h"
 #include "../include/PS2.h"
 #include "../include/ext2.h"
+#include "../include/delay.h"
 
 boot_data bd;
 
@@ -41,14 +42,48 @@ void boot_main()
     pack.sector_count = 1;
     atapio_read_lba28(&pack);
 
+    
+    
     terminal_write(temp, 15);
+    delay_in_ms(500);   
     terminal_clean();
     create_ext2(1);
+    delay_in_ms(500);
     read_superblock(1);
+    delay_in_ms(500);
     read_block_group_descriptor(1);
-    // terminal_clean();
+    delay_in_ms(500);
+    terminal_clean();
     // file_create("/test");
     // lsdir("/");
+    pack.buff = str;
+    pack.lba = 1000;
+    pack.sector_count = 1;
+    for(int i = 0; i < 10; i++)
+    {
+        if(atapio_write_lba28(&pack) != 512)
+        {
+            terminal_printf("msg error write \n");
+            break;
+        }
+        pack.lba++;
+    }
+
+    pack.buff = temp;
+    pack.lba = 1000;
+    pack.sector_count = 1;
+
+    for(int i = 0; i < 10; i++)
+    {
+        if(atapio_read_lba28(&pack) != 512)
+        {
+            terminal_printf("msg error write \n");
+            break;
+        }
+        pack.lba++;
+        terminal_write(temp, 11);
+    }
+
     while(1)
     {
         
