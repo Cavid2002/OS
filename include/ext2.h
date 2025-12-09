@@ -59,7 +59,6 @@ typedef struct
     uint32_t r_group_id;
     uint8_t unused[940];
 } __attribute__((packed)) super_block;
-} __attribute__((packed)) super_block;
 
 
 typedef struct
@@ -71,7 +70,6 @@ typedef struct
     uint16_t free_inode_count;
     uint16_t dir_count;
     uint8_t unused[14];
-} __attribute__((packed)) block_group_descriptor;
 } __attribute__((packed)) block_group_descriptor;
 
 
@@ -132,8 +130,10 @@ int create_ext2(uint8_t part_id);
 int read_mbr();
 int read_superblock(uint8_t part_id);
 int read_block_group_descriptor(uint8_t part_id);
-int create_file(char* path);
+int file_create(char* path);
 file_descriptor file_open(char* path, uint8_t mode);
+int lsdir(char* path);
+
 
 
 #endif

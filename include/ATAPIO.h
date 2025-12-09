@@ -97,7 +97,7 @@ int atapio_flush_cache();
 void atapio_software_reset(uint8_t bus_num);
 int atapio_identify(disk_packet_lba28* pack);
 uint8_t atapio_get_status();
-int atapio_read_lba28(disk_packet_lba28* pack);
+int atapio_read_lba28(disk_packet_lba28* pack); 
 int atapio_write_lba28(disk_packet_lba28* pack);
 int atapio_init();
 #endif

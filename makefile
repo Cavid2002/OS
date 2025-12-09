@@ -78,7 +78,7 @@ bootloader.bin: ./bin/init.bin ./bin/boot.bin ./bin/mbr.bin
 .PHONY: run clean dasm-32 dasm-16
 
 run:
-	qemu-system-i386 -drive format=raw,file=./bootloader.img
+	qemu-system-i386 -drive file=bootloader.img,format=raw,if=ide,snapshot=off
 
 clean:
 	rm -f ./bin/* ./bootloader.bin ./bootloader.img
