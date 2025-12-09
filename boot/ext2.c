@@ -3,6 +3,7 @@
 #include "../include/VGA.h"
 #include "../include/ext2.h"
 #include "../include/string.h"
+#include "../include/string.h"
 
 static uint8_t mbr_buff[512];
 static mbr_partition_table_entry* mbr_table;
