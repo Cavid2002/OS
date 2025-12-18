@@ -12,6 +12,7 @@ boot_data bd;
 
 void foo()
 {
+    terminal_clean();
     disk_packet_lba28 pack;
     char str[BLOCK_SIZE] = "HELLO WORLD";
     char temp[BLOCK_SIZE] = "";
@@ -22,7 +23,7 @@ void foo()
     for(int i = 0; i < 10; i++)
     {
         atapio_write_lba28(&pack);
-        pack.lba += (i + 1) << 3;
+        pack.lba += 8;
     }
 
 
@@ -34,7 +35,7 @@ void foo()
         terminal_printf("%d content", pack.lba);
         terminal_puts(pack.buff);
         terminal_printf("\n");
-        pack.lba += (i + 1) << 3;
+        pack.lba += 8;
     }
     
 }
@@ -55,6 +56,13 @@ void boot_main()
     }
 
     foo();
+    terminal_clean();
+    delay_in_ms(200);
+    create_ext2(1);
+    read_superblock(1);
+    delay_in_ms(200);
+    terminal_clean();
+    read_block_group_descriptor(1);
     while(1)
     {
         

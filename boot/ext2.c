@@ -1090,7 +1090,6 @@ int create_ext2(uint8_t part_id)
         return -1;
     }
 
-    atapio_flush_cache();
     terminal_printf("EXT2 WRITE SUCCESS!\n");
     return 0;
 }

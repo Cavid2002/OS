@@ -4,7 +4,7 @@
 
 #include <stdint.h>
 
-
+#define TIMEOUT                 1000
 #define ATAPIO_PRI              1
 #define ATAPIO_SEC              2
 

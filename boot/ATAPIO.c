@@ -40,6 +40,7 @@ int atapio_wait(uint8_t flag, uint16_t timeout)
         {
             if(status & (ATAPIO_STATUS_ERR | ATAPIO_STATUS_DF))
             {
+                terminal_printf("[DISK ERROR]Abort\n");
                 return -1;
             }
             
@@ -68,7 +69,7 @@ int atapio_bus_set()
     out_byte(port + ATAPIO_REG_CTRL, 1 << 1);
     delay_in_ms(2);
 
-    if(atapio_wait(ATAPIO_STATUS_BSY, 1000) < 0)
+    if(atapio_wait(ATAPIO_STATUS_BSY, TIMEOUT) < 0)
     {
         terminal_printf("[ERROR-ATAPIO] init error\n");
         return -1;
@@ -117,7 +118,7 @@ int atapio_flush_cache()
 {
     uint16_t port = ata_bus[cur_bus].io_base + ATAPIO_REG_CMD;
     out_byte(port, 0xE7);
-    atapio_wait(ATAPIO_STATUS_BSY, 100);
+    atapio_wait(ATAPIO_STATUS_BSY, TIMEOUT);
     return 0;
 }
 
@@ -153,7 +154,7 @@ int atapio_identify(disk_packet_lba28* pack)
 
     out_word(port + ATAPIO_REG_CMD, cmd);
     
-    if(atapio_wait(ATAPIO_STATUS_DRQ, 1000) < 0)
+    if(atapio_wait(ATAPIO_STATUS_DRQ, TIMEOUT) < 0)
     {
         terminal_printf("ATAPIO Read Error!");
         return -1;
@@ -178,7 +179,7 @@ uint8_t atapio_get_status()
 
 int atapio_read_lba28(disk_packet_lba28* pack)
 {
-    if (atapio_wait(ATAPIO_STATUS_RDY, 1000) < 0)
+    if (atapio_wait(ATAPIO_STATUS_RDY, TIMEOUT) < 0)
     {
         terminal_printf("[ERROR] ATAPIO READ ERROR\n");
         return -1;
@@ -202,7 +203,7 @@ int atapio_read_lba28(disk_packet_lba28* pack)
 
     out_byte(port + ATAPIO_REG_CMD, 0x20);
 
-    if (atapio_wait(ATAPIO_STATUS_DRQ, 1000) < 0)
+    if (atapio_wait(ATAPIO_STATUS_DRQ, TIMEOUT) < 0)
         return -1;
 
     for (int s = 0; s < sector_count; s++)
@@ -210,7 +211,7 @@ int atapio_read_lba28(disk_packet_lba28* pack)
         for (int i = 0; i < 256; i++)
             buff[s * 256 + i] = in_word(port + ATAPIO_REG_DATA);
 
-        if (s != sector_count - 1 && atapio_wait(ATAPIO_STATUS_DRQ, 1000) < 0)
+        if (s != sector_count - 1 && atapio_wait(ATAPIO_STATUS_DRQ, TIMEOUT) < 0)
         {
             terminal_printf("[ERROR] ATAPIO READ ERROR\n");    
             return -1;
@@ -225,7 +226,7 @@ int atapio_read_lba28(disk_packet_lba28* pack)
 
 int atapio_write_lba28(disk_packet_lba28* pack)
 {
-    if (atapio_wait(ATAPIO_STATUS_RDY, 1000) < 0)
+    if (atapio_wait(ATAPIO_STATUS_RDY, TIMEOUT) < 0)
     {
         terminal_printf("[ERROR] ATAPIO WRITE ERROR: drive not ready\n");
         return -1;
@@ -246,7 +247,7 @@ int atapio_write_lba28(disk_packet_lba28* pack)
     out_byte(port + ATAPIO_REG_LBA_HIGH, (lba >> 16) & 0xFF);
     out_byte(port + ATAPIO_REG_CMD, 0x30);
 
-    if (atapio_wait(ATAPIO_STATUS_DRQ, 1000) < 0)
+    if (atapio_wait(ATAPIO_STATUS_DRQ, TIMEOUT) < 0)
     {
         terminal_printf("[ERROR] ATAPIO WRITE ERROR: no DRQ after command\n");
         return -1;
@@ -258,14 +259,14 @@ int atapio_write_lba28(disk_packet_lba28* pack)
             out_word(port + ATAPIO_REG_DATA, buff[s * 256 + i]);
 
         if (s != sector_count - 1)
-            if (atapio_wait(ATAPIO_STATUS_DRQ, 10000) < 0)
+            if (atapio_wait(ATAPIO_STATUS_DRQ, TIMEOUT) < 0)
             {
                 terminal_printf("[ERROR] ATAPIO WRITE ERROR: DRQ timeout mid-write\n");
                 return -1;
             }
     }
 
-    if (atapio_wait(ATAPIO_STATUS_BSY, 10000) < 0)
+    if (atapio_wait(ATAPIO_STATUS_BSY, TIMEOUT) < 0)
     {
         terminal_printf("[ERROR] ATAPIO WRITE ERROR: BSY timeout after write\n");
         return -1;

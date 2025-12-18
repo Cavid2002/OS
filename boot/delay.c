@@ -10,7 +10,6 @@ void io_wait()
 
 void delay_in_ns(uint32_t ns)
 {
-    ns = ns * INSTR_PER_NANOSEC * 10;
     while(ns)
     {
         ns--;
@@ -19,7 +18,7 @@ void delay_in_ns(uint32_t ns)
 
 void delay_in_us(uint32_t us)
 {
-    us = us * INSTR_PER_NANOSEC * 100;
+    us = us * 1000;
     while(us)
     {
         us--;
@@ -28,7 +27,7 @@ void delay_in_us(uint32_t us)
 
 void delay_in_ms(uint32_t ms)
 {
-    ms = ms * INSTR_PER_NANOSEC * 10000;
+    ms = ms * 100000;
     while(ms)
     {
         ms--;
