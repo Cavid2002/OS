@@ -265,9 +265,14 @@ int atapio_write_lba28(disk_packet_lba28* pack)
             }
     }
 
+    if (atapio_wait(ATAPIO_STATUS_BSY, 10000) < 0)
+    {
+        terminal_printf("[ERROR] ATAPIO WRITE ERROR: BSY timeout after write\n");
+        return -1;
+    }
+
     return sector_count * 512;
 }
-
 
 int atapio_init()
 {

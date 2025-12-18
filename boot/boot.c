@@ -10,15 +10,38 @@
 
 boot_data bd;
 
-void boot_main()
+void foo()
 {
     disk_packet_lba28 pack;
-    char str[512] = "HELLO WORLD";
-    char temp[512] = "";
+    char str[BLOCK_SIZE] = "HELLO WORLD";
+    char temp[BLOCK_SIZE] = "";
     pack.buff = str;
     pack.lba = 1000;
-    pack.sector_count = 1;
+    pack.sector_count = 4;
 
+    for(int i = 0; i < 10; i++)
+    {
+        atapio_write_lba28(&pack);
+        pack.lba += (i + 1) << 3;
+    }
+
+
+    pack.lba = 1000;
+    pack.buff = temp;
+    for(int i = 0; i < 10; i++)
+    {
+        atapio_read_lba28(&pack);
+        terminal_printf("%d content", pack.lba);
+        terminal_puts(pack.buff);
+        terminal_printf("\n");
+        pack.lba += (i + 1) << 3;
+    }
+    
+}
+
+
+void boot_main()
+{
     bd.boot_disk_num = read_drive_num();
     bd.mmap_addr = MEM_LIST_ADDR;
     terminal_init();
@@ -31,59 +54,7 @@ void boot_main()
         terminal_printf("ATAPIO ERR: %d", status);
     }
 
-    terminal_clean();
-
-    if(atapio_write_lba28(&pack) != 512)
-    {
-        terminal_printf("msg error \n");
-    }
-    pack.buff = temp;
-    pack.lba = 1000;
-    pack.sector_count = 1;
-    atapio_read_lba28(&pack);
-
-    
-    
-    terminal_write(temp, 15);
-    delay_in_ms(500);   
-    terminal_clean();
-    create_ext2(1);
-    delay_in_ms(500);
-    read_superblock(1);
-    delay_in_ms(500);
-    read_block_group_descriptor(1);
-    delay_in_ms(500);
-    terminal_clean();
-    // file_create("/test");
-    // lsdir("/");
-    pack.buff = str;
-    pack.lba = 1000;
-    pack.sector_count = 1;
-    for(int i = 0; i < 10; i++)
-    {
-        if(atapio_write_lba28(&pack) != 512)
-        {
-            terminal_printf("msg error write \n");
-            break;
-        }
-        pack.lba++;
-    }
-
-    pack.buff = temp;
-    pack.lba = 1000;
-    pack.sector_count = 1;
-
-    for(int i = 0; i < 10; i++)
-    {
-        if(atapio_read_lba28(&pack) != 512)
-        {
-            terminal_printf("msg error write \n");
-            break;
-        }
-        pack.lba++;
-        terminal_write(temp, 11);
-    }
-
+    foo();
     while(1)
     {
         
