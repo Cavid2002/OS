@@ -118,8 +118,12 @@ int atapio_flush_cache()
 {
     uint16_t port = ata_bus[cur_bus].io_base + ATAPIO_REG_CMD;
     out_byte(port, 0xE7);
-    atapio_wait(ATAPIO_STATUS_BSY, TIMEOUT);
-    return 0;
+    if(atapio_wait(ATAPIO_STATUS_RDY, TIMEOUT) <= 0)   
+    {
+        terminal_printf("[ERROR]ATAPIO FLUSH TIMEOUT\n");
+        return -1;
+    }
+    return 1;
 }
 
 
@@ -271,6 +275,8 @@ int atapio_write_lba28(disk_packet_lba28* pack)
         terminal_printf("[ERROR] ATAPIO WRITE ERROR: BSY timeout after write\n");
         return -1;
     }
+
+    atapio_flush_cache();
 
     return sector_count * 512;
 }

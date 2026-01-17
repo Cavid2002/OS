@@ -10,6 +10,7 @@
 #define OFFSET_SUPERBLOCK               2
 #define OFFSET_BG_DESC                  4
 #define BLOCK_SIZE                      4096
+#define BLOCK_SECTOR_SIZE               8
 #define SINGLE_INDIRECT_BLOCK_SIZE      BLOCK_SIZE * (BLOCK_SIZE / 4)
 #define DOUBLE_INDIRECT_BLOCK_SIZE      SINGLE_DIRECT_BLOCK_SIZE * (BLOCK_SIZE / 4)
 #define TRIPLE_INDIRECT_BLOCK_SIZE      DOUBLE_INDIRECT_BLOCK_SIZE * (BLOCK_SIZE / 4)
@@ -116,7 +117,7 @@ typedef struct
     uint32_t block_n_sectors;
     uint32_t block_group_count;
     
-} ext2_fs_data;
+} ext2_meta_data;
 
 
 typedef struct

@@ -1,7 +1,8 @@
 ASM = nasm
 CC = gcc
 
-CFLAGS = -ffreestanding -m32 -masm=intel -c -nostdlib -fno-pie -fno-stack-protector
+CFLAGS = -ffreestanding -m32 -masm=intel -c -nostdlib \
+		-fno-pie -fno-stack-protector -mno-sse -mno-sse2 -mno-mmx -mno-80387 
 LDFLAGS = -static -m elf_i386 -T ./boot/linker.ld
 
 OBJS = ./bin/entry.o ./bin/boot.o ./bin/VGA.o \
@@ -78,7 +79,7 @@ bootloader.bin: ./bin/init.bin ./bin/boot.bin ./bin/mbr.bin
 .PHONY: run clean dasm-32 dasm-16
 
 run:
-	qemu-system-i386 -drive file=bootloader.img,format=raw,if=ide,snapshot=off
+	qemu-system-i386 -drive file=bootloader.img,format=raw,if=ide,snapshot=on,media=disk
 
 clean:
 	rm -f ./bin/* ./bootloader.bin ./bootloader.img

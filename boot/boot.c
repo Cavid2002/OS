@@ -56,13 +56,6 @@ void boot_main()
     }
 
     foo();
-    terminal_clean();
-    delay_in_ms(200);
-    create_ext2(1);
-    read_superblock(1);
-    delay_in_ms(200);
-    terminal_clean();
-    read_block_group_descriptor(1);
     while(1)
     {
         

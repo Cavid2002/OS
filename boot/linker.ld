@@ -1,5 +1,5 @@
 OUTPUT_FORMAT("binary")
-ENTRY(terminal_printf)
+ENTRY(boot_main)
 
 SECTIONS
 {
