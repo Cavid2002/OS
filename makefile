@@ -10,7 +10,7 @@ OBJS = ./bin/entry.o ./bin/boot.o ./bin/VGA.o \
 		./bin/interrupt_wrapper.o ./bin/printf.o \
 		./bin/PS2.o \
 		./bin/memory.o ./bin/delay.o ./bin/ATAPIO.o \
-		./bin/string.o ./bin/ext2.o
+		./bin/string.o ./bin/fsys.o
 
 bootloader.bin: ./bin/init.bin ./bin/boot.bin ./bin/mbr.bin
 	cat ./bin/mbr.bin ./bin/init.bin ./bin/boot.bin > ./bootloader.bin
@@ -65,8 +65,8 @@ bootloader.bin: ./bin/init.bin ./bin/boot.bin ./bin/mbr.bin
 ./bin/ATAPIO.o: ./include/ATAPIO.h ./boot/ATAPIO.c
 	$(CC) $(CFLAGS) ./boot/ATAPIO.c -o ./bin/ATAPIO.o
 
-./bin/ext2.o: ./include/ext2.h ./include/MBR.h ./boot/ext2.c
-	$(CC) $(CFLAGS) ./boot/ext2.c -o ./bin/ext2.o
+./bin/fsys.o: ./include/fsys.h ./include/MBR.h ./boot/fsys.c
+	$(CC) $(CFLAGS) ./boot/fsys.c -o ./bin/fsys.o
 
 ./bin/PS2.o: ./include/PS2.h ./boot/PS2.c
 	$(CC) $(CFLAGS) ./boot/PS2.c -o ./bin/PS2.o
@@ -79,7 +79,7 @@ bootloader.bin: ./bin/init.bin ./bin/boot.bin ./bin/mbr.bin
 .PHONY: run clean dasm-32 dasm-16
 
 run:
-	qemu-system-i386 -drive file=bootloader.img,format=raw,if=ide,snapshot=on,media=disk
+	qemu-system-i386 -drive file=bootloader.img,format=raw,if=ide,snapshot=on,media=disk -enable-kvm
 
 clean:
 	rm -f ./bin/* ./bootloader.bin ./bootloader.img

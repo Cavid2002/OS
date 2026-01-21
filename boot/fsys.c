@@ -1,7 +1,7 @@
 #include "../include/MBR.h"
 #include "../include/ATAPIO.h"
 #include "../include/VGA.h"
-#include "../include/ext2.h"
+#include "../include/fsys.h"
 #include "../include/string.h"
 #include "../include/string.h"
 
@@ -9,15 +9,15 @@ static uint8_t mbr_buff[512];
 static mbr_partition_table_entry* mbr_table;     
 static super_block s_block;
 static uint16_t block_size;
-static ext2_meta_data meta_data;
+static fsys_meta_data meta_data;
 
 
 
 int print_super_block()
 {
     terminal_printf("[SUPER BLOCK DATA]\n");
-    terminal_printf("Inode count: %d\n", s_block.total_inode_count);
-    terminal_printf("Block count: %d\n", s_block.total_block_count);
+    terminal_printf("Total Inode count: %d\n", s_block.total_inode_count);
+    terminal_printf("Total Block count: %d\n", s_block.total_block_count);
     terminal_printf("Block size: %d\n", s_block.block_size);
     terminal_printf("Block group size: %d\n", s_block.block_group_size);
     terminal_printf("Block group inode: %d\n", s_block.block_group_inode_count);
@@ -118,7 +118,7 @@ int read_superblock(uint8_t part_id)
     return 0;
 }
 
-int read_block_group_descriptor(uint8_t part_id)
+int read_block_group_descriptors(uint32_t part_id)
 {
     
 }
@@ -542,10 +542,92 @@ int read_file(file_descriptor* fd, char* buff, uint32_t size)
     return sum;
 }
 
+int set_superblock(uint8_t part_id)
+{
+    read_mbr();
+    uint32_t total_sector = mbr_table[part_id].sector_num;
+    uint32_t total_block = total_sector / SECTOR_PER_BLOCK;
+    uint32_t block_size = BLOCK_SIZE;
+
+    memset((uint8_t*)&s_block, 0, sizeof(s_block));
+
+    s_block.block_size = BLOCK_SIZE;
+    s_block.total_block_count = total_block;
+    s_block.total_inode_count = s_block.total_block_count >> 2;
+    s_block.free_block_count = total_block - 1;
+    s_block.free_inode_count = s_block.total_inode_count - 10;
+    s_block.block_group_size = s_block.block_size << 3;
+    
+    s_block.bg_table_size = 
+            s_block.total_block_count / s_block.block_group_size; 
+
+    s_block.block_group_inode_count = 
+            s_block.total_inode_count / (s_block.bg_table_size);
 
 
+    disk_packet_lba28 pack;
+    pack.buff = &s_block;
+    pack.lba = mbr_table[part_id].lba_start;
+    pack.sector_count = 2;
+    
+    if(atapio_write_lba28(&pack) != pack.sector_count << 9)
+    {
+        terminal_printf("[ERROR]set_superblock\n");
+        return -1;
+    }
+
+    terminal_printf("[SUCCESS]set_superblock\n");
+    return 0;    
+}
 
 
+int set_bgd_table(uint32_t part_id)
+{
+    read_mbr();
+    read_superblock(part_id);
+    
+    block_group_descriptor table[1000]; 
+    uint32_t bg_size = s_block.bg_table_size;
+    uint32_t bg_size_inbytes = sizeof(block_group_descriptor) * 1000; 
+    uint32_t sector_size = (bg_size_inbytes + SECTOR_SIZE - 1) / SECTOR_SIZE;   
+    uint32_t offset = sector_size / (s_block.block_size >> 9) + 1;
+    memset((uint8_t*)table, 0, bg_size_inbytes);
+
+    for(uint32_t i = 0; i < bg_size; i++)
+    {
+        table[i].block_bitmap_addr = offset * i;
+        table[i].inode_bitmap_addr = offset * i + 1;
+        table[i].inode_table_addr = offset * i + 2;
+        table[i].free_block_count = i;
+        table[i].free_inode_count = i;
+    }
+
+    uint8_t* temp = (uint8_t*)table;
+    disk_packet_lba28 pack;
+
+    for(uint32_t i = 0; i < sector_size; i++)
+    {
+        pack.buff = temp;
+        pack.lba = 2 + i;
+        pack.sector_count = 1;
+        
+        if(atapio_write_lba28(&pack) != 1 << 9)
+        {
+            terminal_printf("[ERROR]set_bgd_table\n");
+            return -1;
+        }
+        temp += 512;
+    }
+
+    terminal_printf("bgd_table_set complete");
+    return 0;
+}
 
 
+int create_fsys(uint8_t part_id)
+{
+    if(set_superblock(part_id) < 0) return -1;
+    if(set_bgd_table(part_id) < 0) return -1;
 
+    return 0;
+}

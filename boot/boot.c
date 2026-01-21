@@ -5,7 +5,7 @@
 #include "../include/boot.h"
 #include "../include/ATAPIO.h"
 #include "../include/PS2.h"
-#include "../include/ext2.h"
+#include "../include/fsys.h"
 #include "../include/delay.h"
 
 boot_data bd;
@@ -56,6 +56,8 @@ void boot_main()
     }
 
     foo();
+    terminal_clean();
+    create_fsys(1);
     while(1)
     {
         
